@@ -1,0 +1,161 @@
+## This R markdown file is a collection of script to generate Figures used 
+## for the sex-biased TE paper. 
+
+
+
+### Libraries and variables 
+
+```{r}
+### Libraries
+suppressMessages(library(tidyverse))
+suppressMessages(library(readxl))
+suppressMessages(library(dplyr))  
+suppressMessages(library(ggsignif)) 
+suppressMessages(library(ggpubr))
+suppressMessages(library(annotatr)) 
+suppressMessages(library(UpSetR))
+suppressMessages(library(ggplot2)) 
+suppressMessages(library(ComplexHeatmap))
+suppressMessages(library(GenomicRanges))
+
+suppressMessages(library(DESeq2))
+suppressMessages(library(purrr))
+suppressMessages(library(rGREAT)) 
+
+
+```
+
+
+### Variables
+
+```{r}
+## User needs to modify this variable accordingly to local dir 
+dir_github_script <- "G:/My Drive/github_script/"
+
+```
+
+
+### Figure 1.
+
+```{r}
+
+
+### Figure 1 - PCA of gene expression: four organs
+
+### Read in formatted count matrix. 
+four_organs_gene_reformatted_v2 <- readRDS(file = paste0(dir_github_script, 
+                                                         "rds_files/four_organs_gene_reformatted_v2.rds"))
+four_organs_lncRNA_exp_raw_normalized <- readRDS(file = paste0(dir_github_script, 
+                                                               "rds_files/four_organs_lncRNA_exp_raw_normalized.rds"))
+four_organs_TE_subfamily_reformatted_v2 <- readRDS(file = paste0(dir_github_script, 
+                                                               "rds_files/four_organs_TE_subfamily_reformatted_v2.rds"))
+
+### Generate Figures
+#### Gene
+##### Necessary formatting to run plotPCA
+cts_four_organs_gene <- four_organs_gene_reformatted_v2 %>% dplyr::select(where(is.numeric)) %>% t()
+cts_four_organs_gene[is.na(cts_four_organs_gene)] <- 0
+row.names(cts_four_organs_gene) <- four_organ_gene_exp_filtered$Gene
+
+##### Necessary formatting to run plotPCA - data matrix
+dds_four_organs_gene <- DESeqDataSetFromMatrix(countData = cts_four_organs_gene,
+                                               colData = four_organs_gene_reformatted_v2,
+                                               design = ~ Organ)
+
+vsd_four_organs_gene <- vst(dds_four_organs_gene, blind=FALSE)
+
+##### Plot Figure 1A - gene
+pd_four_organs_gene <- plotPCA(vsd_four_organs_gene, intgroup=c("Organ"),  ntop = 300) + 
+  aes(shape = Organ, color = Organ) + theme_classic() + 
+  scale_shape_manual(values = c(1, 0, 2, 3),
+                     labels = c("Brain (18)",
+                                "Heart (16)",
+                                "Liver (21)",
+                                "Lung (16)")) + 
+  scale_color_manual(values = four_organs_colors,
+                     labels = c("Brain (18)",
+                                "Heart (16)",
+                                "Liver (21)",
+                                "Lung (16)"))+
+  ylim(-40, 45)
+
+##### Save Figure 1A - gene
+ggsave(filename = paste0(dir_github_script, "Figures/Figure_1A_PCA_gene.png"),
+       pd_four_organs_gene, width = 3, height = 3)
+
+#### lncRNA
+##### Necessary formatting to run plotPCA
+four_organs_lncRNA_data <- four_organs_lncRNA_exp_raw_normalized_v2 %>% as_tibble()
+
+##### Necessary formatting to run plotPCA - data matrix
+dds_four_organs_lncRNA <- DESeqDataSetFromMatrix(countData = four_organs_lncRNA_exp_raw_normalized,
+                                         colData = four_organs_lncRNA_data,
+                                         design = ~ Organ)
+
+vsd_four_organs_lncRNA <- vst(dds_four_organs_lncRNA, blind=FALSE)
+
+##### Plot Figure 1A - lncRNA
+pd_four_organs_lncRNA <- plotPCA(vsd_four_organs_lncRNA, intgroup=c("Organ"),  ntop = 300)   +  
+  aes(shape = Organ, color = Organ) +
+  theme_classic() + scale_shape_manual(values = c(1, 0, 2, 3),
+                                       labels = c("Brain (18)",
+                                                  "Heart (16)",
+                                                  "Liver (21)",
+                                                  "Lung (16)")) + 
+  scale_color_manual(values = four_organs_colors,
+                     labels = c("Brain (18)",
+                                "Heart (16)",
+                                "Liver (21)",
+                                "Lung (16)"))
+
+##### Plot Figure 1A - lncRNA
+ggsave(filename = paste0(dir_github_script, "Figures/Figure_1A_PCA_lncRNA.png"),
+       pd_four_organs_lncRNA, width = 3, height = 3)
+
+
+#### TE subfamily
+##### Necessary formatting to run plotPCA
+cts_four_organs_TE_subfamily <- four_organs_TE_subfamily_reformatted_v2 %>% dplyr::select(where(is.numeric)) %>% t()
+cts_four_organs_TE_subfamily[is.na(cts_four_organs_TE_subfamily)] <- 0
+row.names(cts_four_organs_TE_subfamily) <- four_organ_TE_subfamily_exp_filtered$Gene
+dds_four_organs_TE_subfamily <- DESeqDataSetFromMatrix(countData = cts_four_organs_TE_subfamily,
+                                                       colData = four_organs_TE_subfamily_reformatted_v2,
+                                                       design = ~ Organ)
+vsd_four_organs_TE_subfamily <- vst(dds_four_organs_TE_subfamily, blind=FALSE)
+
+##### Plot Figure 1A - TE subfamily
+pd_four_organs_TE_subfamily <- plotPCA(vsd_four_organs_TE_subfamily, intgroup=c("Organ"), ntop = 300) +
+  aes(shape = Organ, color = Organ) + theme_classic() + 
+  scale_shape_manual(values = c(1, 0, 2, 3),
+                                       labels = c("Brain (18)",
+                                                  "Heart (16)",
+                                                  "Liver (21)",
+                                                  "Lung (16)")) + 
+  scale_color_manual(values = four_organs_colors,
+                     labels = c("Brain (18)",
+                                "Heart (16)",
+                                "Liver (21)",
+                                "Lung (16)"))
+
+##### Plot Figure 1A - TE subfamily
+ggsave(filename = paste0(dir_github_script, "Figures/Figure_1A_PCA_TE.png"),
+       pd_four_organs_TE_subfamily, width = 3, height = 3)
+
+
+
+```
+
+
+### Figure 2.
+
+```{r}
+
+```
+
+### Figure 3.
+
+```{r}
+
+```
+
+
