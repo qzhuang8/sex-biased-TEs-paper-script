@@ -31,25 +31,39 @@ suppressMessages(library(rGREAT))
 ```{r}
 ## User needs to modify this variable accordingly to local dir 
 dir_github_script <- "G:/My Drive/github_script/"
-
+four_organs_colors <- c("#FF7F0E", "#2CA02C", "#1F77B4", "#e377c2")
+Fivegroups_color <- c("#9467bd", "#c85200", "#17becf", "#D62728", "#ffeb00")
+Fivegroups_shape <- c(8, 17, 17, 15, 15)
+ 
 ```
 
 
 ### Figure 1.
 
 ```{r}
-
-
 ## Figure 1 Organ-specific expression patterns 
 
 ### Read in formatted count matrix. 
 #### Figure 1A
+##### gene
 four_organs_gene_reformatted_v2 <- readRDS(file = paste0(dir_github_script, 
                                                          "rds_files/four_organs_gene_reformatted_v2.rds"))
+four_organ_gene_exp_filtered <- readRDS(file = paste0(dir_github_script, "rds_files/four_organ_gene_exp_filtered.rds"))
+
+##### lncRNA
 four_organs_lncRNA_exp_raw_normalized <- readRDS(file = paste0(dir_github_script, 
                                                                "rds_files/four_organs_lncRNA_exp_raw_normalized.rds"))
+
+four_organs_lncRNA_exp_raw_normalized_v2 <- readRDS(file = paste0(dir_github_script,
+                                      "rds_files/four_organs_lncRNA_exp_raw_normalized_v2.rds"))
+
+
+##### TE subfamily
 four_organs_TE_subfamily_reformatted_v2 <- readRDS(file = paste0(dir_github_script, 
                                                                "rds_files/four_organs_TE_subfamily_reformatted_v2.rds"))
+four_organ_TE_subfamily_exp_filtered <- readRDS(file = paste0(dir_github_script, 
+                                    "rds_files/four_organ_TE_subfamily_exp_filtered.rds"))
+
 #### Figure 1B
 heatmap_four_organ_normalized <- readRDS(file = paste0(dir_github_script,
                                                             "rds_files/heatmap_four_organ_normalized.rds"))
@@ -126,7 +140,7 @@ ggsave(filename = paste0(dir_github_script, "Figures/Figure_1A_PCA_lncRNA.png"),
 ##### Necessary formatting to run plotPCA
 cts_four_organs_TE_subfamily <- four_organs_TE_subfamily_reformatted_v2 %>% dplyr::select(where(is.numeric)) %>% t()
 cts_four_organs_TE_subfamily[is.na(cts_four_organs_TE_subfamily)] <- 0
-row.names(cts_four_organs_TE_subfamily) <- four_organ_TE_subfamily_exp_filtered$Gene
+row.names(cts_four_organs_TE_subfamily) <- four_organ_TE_subfamily_exp_filtered$gene.TE
 dds_four_organs_TE_subfamily <- DESeqDataSetFromMatrix(countData = cts_four_organs_TE_subfamily,
                                                        colData = four_organs_TE_subfamily_reformatted_v2,
                                                        design = ~ Organ)
@@ -190,6 +204,113 @@ ggsave(filename = paste0(dir_github_script,
 ### Figure 2.
 
 ```{r}
+## Figure 2. Effects of gonadal sex and sex-chromosome complement on gene expression in four organs. 
+
+### Read in formatted count matrix. 
+#### Generate Figures - Figure 2A PCA of gene expression in each organ
+Brain_gene_data_filtered <- readRDS(file = paste0(dir_github_script, 
+                                       "rds_files/Brain_gene_data_filtered.rds"))
+Heart_gene_data_filtered <- readRDS(file = paste0(dir_github_script, 
+                                       "rds_files/Heart_gene_data_filtered.rds"))
+Lung_gene_data_filtered <- readRDS(file = paste0(dir_github_script, 
+                                       "rds_files/Lung_gene_data_filtered.rds"))
+Liver_gene_data_filtered <- readRDS(file = paste0(dir_github_script,
+                                       "rds_files/Liver_gene_data_filtered.rds"))
+
+#### Generate Figures - Figure 2B UpsetPlot - Numbers of sDEGs from the XX.F vs XY.M comparison in the four organs
+
+
+
+##### Necessary formatting to run plotPCA - Brain
+cts_Brain_gene <- Brain_gene_data_filtered %>% dplyr::select(where(is.numeric)) %>% t()
+cts_Brain_gene[is.na(cts_Brain_gene)] <- 0
+row.names(cts_Brain_gene) <- Brain_gene_data_filtered$Gene
+
+
+dds_Brain_gene <- DESeqDataSetFromMatrix(countData = cts_Brain_gene,
+                                         colData = Brain_gene_data_filtered,
+                                         design = ~ Group)
+
+vsd_Brain_gene <- vst(dds_Brain_gene, blind=FALSE)
+
+##### Plot Figure 2A - Brain
+pd_Brain_gene <- plotPCA(vsd_Brain_gene, intgroup=c("Group"),  ntop = 300)   +  
+  aes(shape = Group, color = Group) +
+  theme_classic() + scale_color_manual(values = Fivegroups_color) + 
+  scale_shape_manual(values = Fivegroups_shape)
+
+ggsave(filename = paste0(dir_github_script,
+                         "Figures/Figure_2A_Brain.png"),
+       pd_Brain_gene, width = 6, height = 4)
+
+##### Necessary formatting to run plotPCA - Heart
+cts_Heart_gene <- Heart_gene_data_filtered %>% dplyr::select(where(is.numeric)) %>% t()
+cts_Heart_gene[is.na(cts_Heart_gene)] <- 0
+row.names(cts_Heart_gene) <- Heart_gene_data_filtered$Gene
+
+
+dds_Heart_gene <- DESeqDataSetFromMatrix(countData = cts_Heart_gene,
+                                         colData = Heart_gene_data_filtered,
+                                         design = ~ Group)
+
+vsd_Heart_gene <- vst(dds_Heart_gene, blind=FALSE)
+
+##### Plot Figure 2A - Heart
+pd_Heart_gene <- plotPCA(vsd_Heart_gene, intgroup=c("Group"),  ntop = 300)   +  
+  aes(shape = Group, color = Group) +
+  theme_classic() + scale_color_manual(values = Fivegroups_color) + 
+  scale_shape_manual(values = Fivegroups_shape)
+
+ggsave(filename = paste0(dir_github_script,
+                         "Figures/Figure_2A_Heart.png"),
+       pd_Heart_gene, width = 6, height = 4)
+
+##### Necessary formatting to run plotPCA - Lung
+cts_Lung_gene <- Lung_gene_data_filtered %>% dplyr::select(where(is.numeric)) %>% t()
+cts_Lung_gene[is.na(cts_Lung_gene)] <- 0
+row.names(cts_Lung_gene) <- Lung_gene_data_filtered$Gene
+
+
+dds_Lung_gene <- DESeqDataSetFromMatrix(countData = cts_Lung_gene,
+                                         colData = Lung_gene_data_filtered,
+                                         design = ~ Group)
+
+vsd_Lung_gene <- vst(dds_Lung_gene, blind=FALSE)
+
+##### Plot Figure 2A - Lung
+pd_Lung_gene <- plotPCA(vsd_Lung_gene, intgroup=c("Group"),  ntop = 300)   +  
+  aes(shape = Group, color = Group) +
+  theme_classic() + scale_color_manual(values = Fivegroups_color) + 
+  scale_shape_manual(values = Fivegroups_shape)
+
+ggsave(filename = paste0(dir_github_script,
+                         "Figures/Figure_2A_Lung.png"),
+       pd_Lung_gene, width = 6, height = 4)
+
+##### Necessary formatting to run plotPCA - Liver
+cts_Liver_gene <- Liver_gene_data_filtered %>% dplyr::select(where(is.numeric)) %>% t()
+cts_Liver_gene[is.na(cts_Liver_gene)] <- 0
+row.names(cts_Liver_gene) <- Liver_gene_data_filtered$Gene
+
+
+dds_Liver_gene <- DESeqDataSetFromMatrix(countData = cts_Liver_gene,
+                                         colData = Liver_gene_data_filtered,
+                                         design = ~ Group)
+
+vsd_Liver_gene <- vst(dds_Liver_gene, blind=FALSE)
+
+##### Plot Figure 2A - Liver
+pd_Liver_gene <- plotPCA(vsd_Liver_gene, intgroup=c("Group"),  ntop = 300)   +  
+  aes(shape = Group, color = Group) +
+  theme_classic() + scale_color_manual(values = Fivegroups_color) + 
+  scale_shape_manual(values = Fivegroups_shape)
+
+ggsave(filename = paste0(dir_github_script,
+                         "Figures/Figure_2A_Liver.png"),
+       pd_Liver_gene, width = 6, height = 4)
+
+
+
 
 ```
 
