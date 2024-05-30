@@ -40,17 +40,26 @@ dir_github_script <- "G:/My Drive/github_script/"
 ```{r}
 
 
-### Figure 1 - PCA of gene expression: four organs
+## Figure 1 Organ-specific expression patterns 
 
 ### Read in formatted count matrix. 
+#### Figure 1A
 four_organs_gene_reformatted_v2 <- readRDS(file = paste0(dir_github_script, 
                                                          "rds_files/four_organs_gene_reformatted_v2.rds"))
 four_organs_lncRNA_exp_raw_normalized <- readRDS(file = paste0(dir_github_script, 
                                                                "rds_files/four_organs_lncRNA_exp_raw_normalized.rds"))
 four_organs_TE_subfamily_reformatted_v2 <- readRDS(file = paste0(dir_github_script, 
                                                                "rds_files/four_organs_TE_subfamily_reformatted_v2.rds"))
+#### Figure 1B
+heatmap_four_organ_normalized <- readRDS(file = paste0(dir_github_script,
+                                                            "rds_files/heatmap_four_organ_normalized.rds"))
+#### Figure 1C
+Figure_1c_normalized_all_TEinstance <- readRDS(file = paste0(dir_github_script,
+                                                        "rds_files/Figure_1c_normalized_all_TEinstance.rds"))
 
-### Generate Figures
+
+
+### Generate Figures - Fig 1A. PCA of gene expression: four organs
 #### Gene
 ##### Necessary formatting to run plotPCA
 cts_four_organs_gene <- four_organs_gene_reformatted_v2 %>% dplyr::select(where(is.numeric)) %>% t()
@@ -141,6 +150,38 @@ pd_four_organs_TE_subfamily <- plotPCA(vsd_four_organs_TE_subfamily, intgroup=c(
 ggsave(filename = paste0(dir_github_script, "Figures/Figure_1A_PCA_TE.png"),
        pd_four_organs_TE_subfamily, width = 3, height = 3)
 
+
+### Generate Figures - Fig 1B. Heatmap of TE expression (TE subfamily)
+four_organ_normalized_raw_2a = Heatmap(heatmap_four_organ_normalized,
+                                       cluster_columns =  FALSE,
+                                       show_row_names = FALSE,
+                                       heatmap_legend_param = list(title = "  Exp\nZ-score"))
+
+png(filename = paste0(dir_github_script,
+                      "Figures/Figure_1B_heatmap.png"), width = 1080, height = 1080)
+four_organ_normalized_raw_2a
+dev.off()
+
+### Generate Figures - Fig 1C. Violin plot of organ-biased TE instances
+cbbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+my_comparisons2 <- list( c("Brain", "Heart"), c("Brain", "Liver"), c("Brain", "Lung"),
+                         c("Heart", "Liver"), c("Heart", "Lung"), c("Liver", "Lung"))
+organ_biased_TEinstance_expression_plot <- ggplot(data = Figure_1c_normalized_all_TEinstance ,
+                                                    aes(x = Organ, color = Organ, y= log2(TE_count))) + 
+  geom_violin() +
+  geom_boxplot(position = position_dodge(0.9), width = 0.1)+
+  facet_grid(. ~ organ_biased) +
+  labs(x = "") +
+  theme_classic() +
+  scale_colour_manual(values=cbbPalette[c(7, 4, 6, 8, 1)]) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  theme(legend.position = "bottom",
+        legend.title = element_blank(),
+        axis.text.x = element_text(angle = 90, hjust = 0.5, vjust = 1))
+
+ggsave(filename = paste0(dir_github_script,
+                         "Figures/Figure_1C_violinPlot.png"),
+       organ_biased_TEinstance_expression_plot, width = 6, height = 4)
 
 
 ```
