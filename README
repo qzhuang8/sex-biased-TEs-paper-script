@@ -6,6 +6,6 @@ Preprocessed files have been saved in the rds folder and most subpanels of figur
 can be generated with the script. Exceptions are the ones directly plotted with 
 precalculated stats/numbers. Such as some bar plots. 
 
-
+To use the script, download and modify the directory to local folder accordingly.  
 
 
