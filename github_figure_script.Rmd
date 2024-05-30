@@ -334,6 +334,231 @@ dev.off()
 ### Figure 3.
 
 ```{r}
+## Figure 3. Concordant expression between sDETE and nearest sDEG or slncRNA.
+
+### Read in formatted count matrix. 
+#### Generate Figures - Figure 3A Cumulative distribution of distances between 
+#### sDETE/sDEG/slncRNA and nearest sDETE/sDEG/slncRNA in mouse liver
+##### sDETE
+sDETE_to_sDETE_distance_Both <- readRDS(file = paste0(dir_github_script, 
+                                       "rds_files/sDETE_to_sDETE_distance_Both.rds"))
+sDETE_to_sDETE_distance_Pheno <- readRDS(file = paste0(dir_github_script, 
+                                       "rds_files/sDETE_to_sDETE_distance_Pheno.rds"))
+nonsDETE_to_sDETE_distance_Both <- readRDS(file = paste0(dir_github_script, 
+                                       "rds_files/nonsDETE_to_sDETE_distance_Both.rds"))
+nonsDETE_to_sDETE_distance_Pheno <- readRDS(file = paste0(dir_github_script, 
+                                       "rds_files/nonsDETE_to_sDETE_distance_Pheno.rds"))
+
+##### sDEG
+DEG_to_DEG_distance_Both <- readRDS(file = paste0(dir_github_script, 
+                                       "rds_files/DEG_to_DEG_distance_Both.rds"))
+DEG_to_DEG_distance_Pheno <- readRDS(file = paste0(dir_github_script, 
+                                       "rds_files/DEG_to_DEG_distance_Pheno.rds"))
+nonDEG_to_DEG_distance_Both <- readRDS(file = paste0(dir_github_script, 
+                                       "rds_files/nonDEG_to_DEG_distance_Both.rds"))
+nonDEG_to_DEG_distance_Pheno <- readRDS(file = paste0(dir_github_script, 
+                                       "rds_files/nonDEG_to_DEG_distance_Pheno.rds"))
+
+##### slncRNA
+slncRNA_to_slncRNA_distance_Both <- readRDS(file = paste0(dir_github_script, 
+                                       "rds_files/slncRNA_to_slncRNA_distance_Both.rds"))
+slncRNA_to_slncRNA_distance_Pheno <- readRDS(file = paste0(dir_github_script, 
+                                       "rds_files/slncRNA_to_slncRNA_distance_Pheno.rds"))
+nonslncRNA_to_slncRNA_distance_Both_reformated <- readRDS(file = paste0(dir_github_script, 
+                                       "rds_files/nonslncRNA_to_slncRNA_distance_Both_reformated.rds"))
+nonslncRNA_to_slncRNA_distance_Pheno_reformated <- readRDS(file = paste0(dir_github_script, 
+                                       "rds_files/nonslncRNA_to_slncRNA_distance_Pheno_reformated.rds"))
+
+
+#### Generate Figures - Figure 3B Cumulative distribution of distances between 
+#### sDETE and nearest sDEG in mouse liver
+all_DETE_DEG_distance_Both <- readRDS(file = paste0(dir_github_script, 
+                                       "rds_files/all_DETE_DEG_distance_Both.rds"))
+all_DETE_DEG_distance_Pheno <- readRDS(file = paste0(dir_github_script, 
+                                       "rds_files/all_DETE_DEG_distance_Pheno.rds"))
+random_draft_DETE_to_gene_distance_Both <- readRDS(file = paste0(dir_github_script, 
+                                       "rds_files/random_draft_DETE_to_gene_distance_Both.rds"))
+random_draft_DETE_to_gene_distance_Pheno <- readRDS(file = paste0(dir_github_script, 
+                                       "rds_files/random_draft_DETE_to_gene_distance_Pheno.rds"))
+
+#### Generate Figures - Figure 3C Cumulative distribution of distances between 
+#### sDETE and nearest slncRNA in mouse liver
+slncRNA_to_sDETE_distance_Both <- readRDS(file = paste0(dir_github_script, 
+                                       "rds_files/slncRNA_to_sDETE_distance_Both.rds"))
+slncRNA_to_sDETE_distance_Pheno <- readRDS(file = paste0(dir_github_script, 
+                                       "rds_files/slncRNA_to_sDETE_distance_Pheno.rds"))
+random_draft_DETE_to_lncRNA_distance_Both <- readRDS(file = paste0(dir_github_script, 
+                                       "rds_files/random_draft_DETE_to_lncRNA_distance_Both.rds"))
+random_draft_DETE_to_lncRNA_distance_Pheno <- readRDS(file = paste0(dir_github_script, 
+                                       "rds_files/random_draft_DETE_to_lncRNA_distance_Pheno.rds"))
+
+
+
+
+##### Plot Figure 3A- sDETE/sDEG/slncRNA and nearest sDETE/sDEG/slncRNA
+###### sDETE
+png(filename = paste0(dir_github_script, "Figures/Figure_3A_sDETE.png"), width = 720, height = 720, res = 144)
+
+
+par(pty='s')  # force the plot to be square before we start
+plot((sDETE_to_sDETE_distance_Both[[1]] %>% filter(dist_check > 0))$dist_check %>% log10() %>% ecdf(), 
+     xlab = "Log10 distance to nearest sDETE",
+     xlim = c(0, 15),
+     ylab = "Cumulative proportion",
+     main = "Cumulative Distribution of\n Distance to sDETE", 
+     col = "#2B5DB4", lwd = 4)
+lines((sDETE_to_sDETE_distance_Pheno[[1]] %>% filter(dist_check > 0))$dist_check %>% log10() %>% ecdf(), 
+      col = "#FF9664", lwd = 4)
+lines((nonsDETE_to_sDETE_distance_Both[[1]] %>% filter(dist_check > 0))$dist_check %>% log10() %>% ecdf(), 
+      col = "#63B8CC", lwd = 4)
+lines((nonsDETE_to_sDETE_distance_Pheno[[1]] %>% filter(dist_check > 0))$dist_check %>% log10() %>% ecdf(),
+      col = "#AA63BF", lwd = 4)
+# lines((ERVK_DETE_DEG_distance_Pheno[[2]] %>% filter(dist_check > 0))$dist_check %>% log10() %>% ecdf(), 
+#       col = "light blue")
+abline(v = 5, col = "blue")
+legend('bottomright', 
+       legend=c("sDETE(XX.FvsXY.M)",
+                "sDETE(XY.FvsXY.M)",
+                "sDETE_and_randomTE(XX.FvsXY.M)",
+                "sDETE_and_randomTE(XY.FvsXY.M)",
+                "Log10 distance = 5"),  # text in the legend
+       col=c("#2B5DB4", "#FF9664", "#63B8CC", "#AA63BF","blue"),  # point colors
+       pch=12,
+       cex = 0.6) 
+dev.off()
+
+
+###### sDEG 
+png(filename = paste0(dir_github_script, "Figures/Figure_3A_sDEG.png"), width = 720, height = 720, res = 144)
+
+par(pty='s')  # force the plot to be square before we start
+plot((DEG_to_DEG_distance_Both[[1]] %>% filter(dist_check > 0))$dist_check %>% log10() %>% ecdf(), 
+     xlab = "Log10 distance to nearest sDEG",
+     xlim = c(0, 15),
+     ylab = "Cumulative proportion",
+     main = "Cumulative Distribution of\n Distance to sDEG", 
+     col = "#2B5DB4", lwd = 4)
+lines((DEG_to_DEG_distance_Pheno[[1]] %>% filter(dist_check > 0))$dist_check %>% log10() %>% ecdf(), 
+      col = "#FF9664", lwd = 4)
+lines((nonDEG_to_DEG_distance_Both[[1]] %>% filter(dist_check > 0))$dist_check %>% log10() %>% ecdf(), 
+      col = "#63B8CC", lwd = 4)
+lines((nonDEG_to_DEG_distance_Pheno[[1]] %>% filter(dist_check > 0))$dist_check %>% log10() %>% ecdf(),
+      col = "#AA63BF", lwd = 4)
+# lines((ERVK_DETE_DEG_distance_Pheno[[2]] %>% filter(dist_check > 0))$dist_check %>% log10() %>% ecdf(), 
+#       col = "light blue")
+abline(v = 5, col = "blue")
+legend('bottomright', 
+       legend=c("sDEG(XX.FvsXY.M)",
+                "sDEG(XY.FvsXY.M)",
+                "sDEG_and_randomGene(XX.FvsXY.M)",
+                "sDEG_and_randomGene(XY.FvsXY.M)",
+                "Log10 distance = 5"),  # text in the legend
+       col=c("#2B5DB4", "#FF9664", "#63B8CC", "#AA63BF","blue"),  # point colors
+       pch=12,
+       cex = 0.5)
+
+dev.off()
+
+###### slncRNA
+
+png(filename = paste0(dir_github_script, "Figures/Figure_3A_slncRNA.png"), 
+    width = 720, height = 720, res = 144)
+
+
+par(pty='s')  # force the plot to be square before we start
+plot((slncRNA_to_slncRNA_distance_Both[[1]] %>% filter(dist_check>0))$dist_check %>% log10() %>% ecdf(), 
+     xlab = "Log10 distance to nearest slncRNA",
+     xlim = c(0, 15),
+     ylim = c(0, 1), 
+     ylab = "Cumulative proportion",
+     main = "Cumulative Distribution of\n Distance to slncRNA", 
+     col = "#2B5DB4", lwd = 4)
+lines((slncRNA_to_slncRNA_distance_Pheno[[1]] %>% filter(dist_check>0))$dist_check %>% log10() %>% ecdf(), 
+      col = "#FF9664", lwd = 4)
+lines((nonslncRNA_to_slncRNA_distance_Both_reformated )$dist_check %>% log10() %>% ecdf(), 
+      col = "#63B8CC", lwd = 4)
+lines((nonslncRNA_to_slncRNA_distance_Pheno_reformated )$dist_check %>% log10() %>% ecdf(),
+      col = "#AA63BF", lwd = 4)
+#       col = "light blue")
+abline(v = 5, col = "blue")
+legend('bottomright', 
+       legend=c("slncRNA(XX.FvsXY.M)",
+                "slncRNA(XY.FvsXY.M)",
+                "slncRNA_and_randomlncRNA(XX.FvsXY.M)",
+                "slncRNA_and_randomlncRNA(XY.FvsXY.M)",
+                "Log10 distance = 5"),  # text in the legend
+       col=c("#2B5DB4", "#FF9664", "#63B8CC", "#AA63BF","blue"),  # point colors
+       pch=12,
+       cex = 0.45) 
+dev.off()
+
+
+
+##### Plot Figure 3B - sDETE and nearest sDEG
+tiff(filename = paste0(dir_github_script, "Figures/Figure_3B_sDETE_and_sDEG.png"),
+    width = 720, height = 720, res = 132)
+
+par(pty='s')  # force the plot to be square before we start
+plot((all_DETE_DEG_distance_Both[[1]])$dist_check %>% log10() %>% ecdf(), 
+     xlab = "Log10 distance to nearest DETE",
+     xlim = c(0, 15),
+     ylim = c(0, 1), 
+     ylab = "Cumulative proportion",
+     main = "Cumulative Distribution of\n Distance from sDETE to gene", 
+     col = "#2B5DB4", lwd = 4)
+lines((all_DETE_DEG_distance_Pheno[[1]])$dist_check %>% log10() %>% ecdf(), 
+      col = "#FF9664", lwd = 4)
+lines(random_draft_DETE_to_gene_distance_Both %>% log10() %>% ecdf(), 
+      col = "#63B8CC", lwd = 4)
+lines(random_draft_DETE_to_gene_distance_Pheno %>% log10() %>% ecdf(), 
+      col = "#AA63BF", lwd = 4)
+abline(v = 5, col = "blue")
+legend('bottomright', 
+       legend=c("sDETE_and_sDEG(XX.FvsXY.M)",
+                "sDETE_and_sDEG(XY.FvsXY.M)",
+                "sDETE_and_randomGene(XX.FvsXY.M)",
+                "sDETE_and_randomGene(XY.FvsXY.M)",
+                "Log10 distance = 5"),  # text in the legend
+       col=c("#2B5DB4", "#FF9664", "#63B8CC", "#AA63BF","blue"),  # point colors
+       pch=15,
+       cex = 0.6)
+
+dev.off()
+
+
+##### Plot Figure 3C - sDETE and nearest slncRNA
+
+png(filename = paste0(dir_github_script, "Figures/Figure_3C_sDETE_to_slncRNA.png"), width = 720, height = 720, res = 144)
+
+
+par(pty='s')  # force the plot to be square before we start
+plot((slncRNA_to_sDETE_distance_Both[[1]])$dist_check %>% log10() %>% ecdf(), 
+     xlab = "Log10 distance to nearest sDETE",
+     xlim = c(0, 15),
+     ylim = c(0, 1), 
+     ylab = "Cumulative proportion",
+     main = "Cumulative Distribution of Distance\n between sDETE and lncRNA/slncRNA", 
+     col = "#2B5DB4", lwd = 4)
+lines((slncRNA_to_sDETE_distance_Pheno[[1]])$dist_check %>% log10() %>% ecdf(), 
+      col = "#FF9664", lwd = 4)
+lines((random_draft_DETE_to_lncRNA_distance_Both ) %>% log10() %>% ecdf(), 
+      col = "#63B8CC", lwd = 4)
+lines((random_draft_DETE_to_lncRNA_distance_Pheno ) %>% log10() %>% ecdf(),
+      col = "#AA63BF", lwd = 4)
+# lines((ERVK_DETE_DEG_distance_Pheno[[2]] %>% filter(dist_check > 0))$dist_check %>% log10() %>% ecdf(), 
+#       col = "light blue")
+abline(v = 5, col = "blue")
+legend('bottomright', 
+       legend=c("sDETE_and_slncRNA(XX.FvsXY.M)",
+                "sDETE_and_slncRNA(XY.FvsXY.M)",
+                "sDETE_and_randomlncRNA(XX.FvsXY.M)",
+                "sDETE_and_randomlncRNA(XY.FvsXY.M)",
+                "Log10 distance = 5"),  # text in the legend
+       col=c("#2B5DB4", "#FF9664", "#63B8CC", "#AA63BF","blue"),  # point colors
+       pch=12,
+       cex = 0.5) 
+dev.off()
+
 
 ```
 
