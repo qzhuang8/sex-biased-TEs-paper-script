@@ -218,7 +218,8 @@ Liver_gene_data_filtered <- readRDS(file = paste0(dir_github_script,
                                        "rds_files/Liver_gene_data_filtered.rds"))
 
 #### Generate Figures - Figure 2B UpsetPlot - Numbers of sDEGs from the XX.F vs XY.M comparison in the four organs
-
+list_sDEG_four_organs_for_upsetPlot_XXfvsXYm <- readRDS(file = paste0(dir_github_script,
+                                       "rds_files/list_sDEG_four_organs_for_upsetPlot_XXfvsXYm.rds"))
 
 
 ##### Necessary formatting to run plotPCA - Brain
@@ -310,7 +311,23 @@ ggsave(filename = paste0(dir_github_script,
        pd_Liver_gene, width = 6, height = 4)
 
 
+##### Necessary formatting to make UpsetPlot - sDEG 
+list_sDEG_four_organs_for_upsetPlot_format_XXfvsXYm <- list_to_matrix(list_sDEG_four_organs_for_upsetPlot_XXfvsXYm) %>% data.frame()
 
+##### Plot Figure 2B - Four organs sDEG: XX.F vs XY.M 
+sDEG_intersect_upsetPlot_XXfvsXYm <- upset(list_sDEG_four_organs_for_upsetPlot_format_XXfvsXYm,
+                                   keep.order = T,
+                                   # order.by = "freq",
+                                   nsets = 8,
+                                   mainbar.y.label = "Count of sDEG",
+                                   sets.x.label = "Significant sDEG total",
+                                   point.size = 2.8,
+                                   line.size = 1.3,
+                                   text.scale = 1.9)
+png(filename = paste0(dir_github_script,
+                      "Figures/Figure_2B_sDEG_upsetPlot_XXfvsXYm.png"), width = 480, height = 360)
+sDEG_intersect_upsetPlot_XXfvsXYm
+dev.off()
 
 ```
 
