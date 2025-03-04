@@ -1,0 +1,565 @@
+## This R markdown file is a collection of script to generate Figures used 
+## for the sex-biased TE paper. 
+
+
+
+### Libraries and variables 
+
+```{r}
+### Libraries
+suppressMessages(library(tidyverse))
+suppressMessages(library(readxl))
+suppressMessages(library(dplyr))  
+suppressMessages(library(ggsignif)) 
+suppressMessages(library(ggpubr))
+suppressMessages(library(annotatr)) 
+suppressMessages(library(UpSetR))
+suppressMessages(library(ggplot2)) 
+suppressMessages(library(ComplexHeatmap))
+suppressMessages(library(GenomicRanges))
+
+suppressMessages(library(DESeq2))
+suppressMessages(library(purrr))
+suppressMessages(library(rGREAT)) 
+
+
+```
+
+
+### Variables
+
+```{r}
+## User needs to modify this variable accordingly to local dir 
+dir_github_script <- "G:/My Drive/github_script/"
+four_organs_colors <- c("#FF7F0E", "#2CA02C", "#1F77B4", "#e377c2")
+Fivegroups_color <- c("#9467bd", "#c85200", "#17becf", "#D62728", "#ffeb00")
+Fivegroups_shape <- c(8, 17, 17, 15, 15)
+ 
+```
+
+
+### Figure 1.
+
+```{r}
+## Figure 1 Organ-specific expression patterns 
+
+### Read in formatted count matrix. 
+#### Figure 1A
+##### gene
+four_organs_gene_reformatted_v2 <- readRDS(file = paste0(dir_github_script, 
+                                                         "rds_files/four_organs_gene_reformatted_v2.rds"))
+four_organ_gene_exp_filtered <- readRDS(file = paste0(dir_github_script, "rds_files/four_organ_gene_exp_filtered.rds"))
+
+##### lncRNA
+four_organs_lncRNA_exp_raw_normalized <- readRDS(file = paste0(dir_github_script, 
+                                                               "rds_files/four_organs_lncRNA_exp_raw_normalized.rds"))
+
+four_organs_lncRNA_exp_raw_normalized_v2 <- readRDS(file = paste0(dir_github_script,
+                                      "rds_files/four_organs_lncRNA_exp_raw_normalized_v2.rds"))
+
+
+##### TE subfamily
+four_organs_TE_subfamily_reformatted_v2 <- readRDS(file = paste0(dir_github_script, 
+                                                               "rds_files/four_organs_TE_subfamily_reformatted_v2.rds"))
+four_organ_TE_subfamily_exp_filtered <- readRDS(file = paste0(dir_github_script, 
+                                    "rds_files/four_organ_TE_subfamily_exp_filtered.rds"))
+
+#### Figure 1B
+heatmap_four_organ_normalized <- readRDS(file = paste0(dir_github_script,
+                                                            "rds_files/heatmap_four_organ_normalized.rds"))
+#### Figure 1C
+Figure_1c_normalized_all_TEinstance <- readRDS(file = paste0(dir_github_script,
+                                                        "rds_files/Figure_1c_normalized_all_TEinstance.rds"))
+
+
+
+### Generate Figures - Fig 1A. PCA of gene expression: four organs
+#### Gene
+##### Necessary formatting to run plotPCA
+cts_four_organs_gene <- four_organs_gene_reformatted_v2 %>% dplyr::select(where(is.numeric)) %>% t()
+cts_four_organs_gene[is.na(cts_four_organs_gene)] <- 0
+row.names(cts_four_organs_gene) <- four_organ_gene_exp_filtered$Gene
+
+##### Necessary formatting to run plotPCA - data matrix
+dds_four_organs_gene <- DESeqDataSetFromMatrix(countData = cts_four_organs_gene,
+                                               colData = four_organs_gene_reformatted_v2,
+                                               design = ~ Organ)
+
+vsd_four_organs_gene <- vst(dds_four_organs_gene, blind=FALSE)
+
+##### Plot Figure 1A - gene
+pd_four_organs_gene <- plotPCA(vsd_four_organs_gene, intgroup=c("Organ"),  ntop = 300) + 
+  aes(shape = Organ, color = Organ) + theme_classic() + 
+  scale_shape_manual(values = c(1, 0, 2, 3),
+                     labels = c("Brain (18)",
+                                "Heart (16)",
+                                "Liver (21)",
+                                "Lung (16)")) + 
+  scale_color_manual(values = four_organs_colors,
+                     labels = c("Brain (18)",
+                                "Heart (16)",
+                                "Liver (21)",
+                                "Lung (16)"))+
+  ylim(-40, 45)
+
+# ##### Save Figure 1A - gene
+# ggsave(filename = paste0(dir_github_script, "Figures/Figure_1A_PCA_gene.png"),
+#        pd_four_organs_gene, width = 3, height = 3)
+
+#### lncRNA
+##### Necessary formatting to run plotPCA
+four_organs_lncRNA_data <- four_organs_lncRNA_exp_raw_normalized_v2 %>% as_tibble()
+
+##### Necessary formatting to run plotPCA - data matrix
+dds_four_organs_lncRNA <- DESeqDataSetFromMatrix(countData = four_organs_lncRNA_exp_raw_normalized,
+                                         colData = four_organs_lncRNA_data,
+                                         design = ~ Organ)
+
+vsd_four_organs_lncRNA <- vst(dds_four_organs_lncRNA, blind=FALSE)
+
+##### Plot Figure 1A - lncRNA
+pd_four_organs_lncRNA <- plotPCA(vsd_four_organs_lncRNA, intgroup=c("Organ"),  ntop = 300)   +  
+  aes(shape = Organ, color = Organ) +
+  theme_classic() + scale_shape_manual(values = c(1, 0, 2, 3),
+                                       labels = c("Brain (18)",
+                                                  "Heart (16)",
+                                                  "Liver (21)",
+                                                  "Lung (16)")) + 
+  scale_color_manual(values = four_organs_colors,
+                     labels = c("Brain (18)",
+                                "Heart (16)",
+                                "Liver (21)",
+                                "Lung (16)"))
+
+# ##### Plot Figure 1A - lncRNA
+# ggsave(filename = paste0(dir_github_script, "Figures/Figure_1A_PCA_lncRNA.png"),
+#        pd_four_organs_lncRNA, width = 3, height = 3)
+
+
+#### TE subfamily
+##### Necessary formatting to run plotPCA
+cts_four_organs_TE_subfamily <- four_organs_TE_subfamily_reformatted_v2 %>% dplyr::select(where(is.numeric)) %>% t()
+cts_four_organs_TE_subfamily[is.na(cts_four_organs_TE_subfamily)] <- 0
+row.names(cts_four_organs_TE_subfamily) <- four_organ_TE_subfamily_exp_filtered$gene.TE
+dds_four_organs_TE_subfamily <- DESeqDataSetFromMatrix(countData = cts_four_organs_TE_subfamily,
+                                                       colData = four_organs_TE_subfamily_reformatted_v2,
+                                                       design = ~ Organ)
+vsd_four_organs_TE_subfamily <- vst(dds_four_organs_TE_subfamily, blind=FALSE)
+
+##### Plot Figure 1A - TE subfamily
+pd_four_organs_TE_subfamily <- plotPCA(vsd_four_organs_TE_subfamily, intgroup=c("Organ"), ntop = 300) +
+  aes(shape = Organ, color = Organ) + theme_classic() + 
+  scale_shape_manual(values = c(1, 0, 2, 3),
+                                       labels = c("Brain (17)",
+                                                  "Heart (15)",
+                                                  "Liver (20)",
+                                                  "Lung (16)")) + 
+  scale_color_manual(values = four_organs_colors,
+                     labels = c("Brain (17)",
+                                "Heart (15)",
+                                "Liver (20)",
+                                "Lung (16)"))
+
+# ##### Plot Figure 1A - TE subfamily
+# ggsave(filename = paste0(dir_github_script, "Figures/Figure_1A_PCA_TE.png"),
+#        pd_four_organs_TE_subfamily, width = 3, height = 3)
+
+
+### Generate Figures - Fig 1B. Heatmap of TE expression (TE subfamily)
+four_organ_normalized_raw_2a = Heatmap(heatmap_four_organ_normalized,
+                                       cluster_columns =  FALSE,
+                                       show_row_names = FALSE,
+                                       heatmap_legend_param = list(title = "  Exp\nZ-score"))
+
+png(filename = paste0(dir_github_script,
+                      "Figures/Figure_1B_heatmap.png"), width = 1080, height = 1080)
+four_organ_normalized_raw_2a
+dev.off()
+
+### Generate Figures - Fig 1C. Violin plot of organ-biased TE instances
+cbbPalette <- c("#000000", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+my_comparisons2 <- list( c("Brain", "Heart"), c("Brain", "Liver"), c("Brain", "Lung"),
+                         c("Heart", "Liver"), c("Heart", "Lung"), c("Liver", "Lung"))
+organ_biased_TEinstance_expression_plot <- ggplot(data = Figure_1c_normalized_all_TEinstance ,
+                                                    aes(x = Organ, color = Organ, y= log2(TE_count))) + 
+  geom_violin() +
+  geom_boxplot(position = position_dodge(0.9), width = 0.1)+
+  facet_grid(. ~ organ_biased) +
+  labs(x = "") +
+  theme_classic() +
+  scale_colour_manual(values=cbbPalette[c(7, 4, 6, 8, 1)]) +
+  theme(plot.title = element_text(hjust = 0.5)) +
+  theme(legend.position = "bottom",
+        legend.title = element_blank(),
+        axis.text.x = element_text(angle = 90, hjust = 0.5, vjust = 1))
+
+# ggsave(filename = paste0(dir_github_script,
+#                          "Figures/Figure_1C_violinPlot.png"),
+#        organ_biased_TEinstance_expression_plot, width = 6, height = 4)
+
+
+```
+
+
+### Figure 2.
+
+```{r}
+## Figure 2. Effects of gonadal sex and sex-chromosome complement on gene expression in four organs. 
+
+### Read in formatted count matrix. 
+#### Generate Figures - Figure 2A PCA of gene expression in each organ
+Brain_gene_data_filtered <- readRDS(file = paste0(dir_github_script, 
+                                       "rds_files/Brain_gene_data_filtered.rds"))
+Heart_gene_data_filtered <- readRDS(file = paste0(dir_github_script, 
+                                       "rds_files/Heart_gene_data_filtered.rds"))
+Lung_gene_data_filtered <- readRDS(file = paste0(dir_github_script, 
+                                       "rds_files/Lung_gene_data_filtered.rds"))
+Liver_gene_data_filtered <- readRDS(file = paste0(dir_github_script,
+                                       "rds_files/Liver_gene_data_filtered.rds"))
+
+#### Generate Figures - Figure 2B UpsetPlot - Numbers of sDEGs from the XX.F vs XY.M comparison in the four organs
+list_sDEG_four_organs_for_upsetPlot_XXfvsXYm <- readRDS(file = paste0(dir_github_script,
+                                       "rds_files/list_sDEG_four_organs_for_upsetPlot_XXfvsXYm.rds"))
+
+
+##### Necessary formatting to run plotPCA - Brain
+cts_Brain_gene <- Brain_gene_data_filtered %>% dplyr::select(where(is.numeric)) %>% t()
+cts_Brain_gene[is.na(cts_Brain_gene)] <- 0
+row.names(cts_Brain_gene) <- Brain_gene_data_filtered$Gene
+
+
+dds_Brain_gene <- DESeqDataSetFromMatrix(countData = cts_Brain_gene,
+                                         colData = Brain_gene_data_filtered,
+                                         design = ~ Group)
+
+vsd_Brain_gene <- vst(dds_Brain_gene, blind=FALSE)
+
+##### Plot Figure 2A - Brain
+pd_Brain_gene <- plotPCA(vsd_Brain_gene, intgroup=c("Group"),  ntop = 300)   +  
+  aes(shape = Group, color = Group) +
+  theme_classic() + scale_color_manual(values = Fivegroups_color) + 
+  scale_shape_manual(values = Fivegroups_shape)
+
+ggsave(filename = paste0(dir_github_script,
+                         "Figures/Figure_2A_Brain.png"),
+       pd_Brain_gene, width = 6, height = 4)
+
+##### Necessary formatting to run plotPCA - Heart
+cts_Heart_gene <- Heart_gene_data_filtered %>% dplyr::select(where(is.numeric)) %>% t()
+cts_Heart_gene[is.na(cts_Heart_gene)] <- 0
+row.names(cts_Heart_gene) <- Heart_gene_data_filtered$Gene
+
+
+dds_Heart_gene <- DESeqDataSetFromMatrix(countData = cts_Heart_gene,
+                                         colData = Heart_gene_data_filtered,
+                                         design = ~ Group)
+
+vsd_Heart_gene <- vst(dds_Heart_gene, blind=FALSE)
+
+##### Plot Figure 2A - Heart
+pd_Heart_gene <- plotPCA(vsd_Heart_gene, intgroup=c("Group"),  ntop = 300)   +  
+  aes(shape = Group, color = Group) +
+  theme_classic() + scale_color_manual(values = Fivegroups_color) + 
+  scale_shape_manual(values = Fivegroups_shape)
+
+ggsave(filename = paste0(dir_github_script,
+                         "Figures/Figure_2A_Heart.png"),
+       pd_Heart_gene, width = 6, height = 4)
+
+##### Necessary formatting to run plotPCA - Lung
+cts_Lung_gene <- Lung_gene_data_filtered %>% dplyr::select(where(is.numeric)) %>% t()
+cts_Lung_gene[is.na(cts_Lung_gene)] <- 0
+row.names(cts_Lung_gene) <- Lung_gene_data_filtered$Gene
+
+
+dds_Lung_gene <- DESeqDataSetFromMatrix(countData = cts_Lung_gene,
+                                         colData = Lung_gene_data_filtered,
+                                         design = ~ Group)
+
+vsd_Lung_gene <- vst(dds_Lung_gene, blind=FALSE)
+
+##### Plot Figure 2A - Lung
+pd_Lung_gene <- plotPCA(vsd_Lung_gene, intgroup=c("Group"),  ntop = 300)   +  
+  aes(shape = Group, color = Group) +
+  theme_classic() + scale_color_manual(values = Fivegroups_color) + 
+  scale_shape_manual(values = Fivegroups_shape)
+
+ggsave(filename = paste0(dir_github_script,
+                         "Figures/Figure_2A_Lung.png"),
+       pd_Lung_gene, width = 6, height = 4)
+
+##### Necessary formatting to run plotPCA - Liver
+cts_Liver_gene <- Liver_gene_data_filtered %>% dplyr::select(where(is.numeric)) %>% t()
+cts_Liver_gene[is.na(cts_Liver_gene)] <- 0
+row.names(cts_Liver_gene) <- Liver_gene_data_filtered$Gene
+
+
+dds_Liver_gene <- DESeqDataSetFromMatrix(countData = cts_Liver_gene,
+                                         colData = Liver_gene_data_filtered,
+                                         design = ~ Group)
+
+vsd_Liver_gene <- vst(dds_Liver_gene, blind=FALSE)
+
+##### Plot Figure 2A - Liver
+pd_Liver_gene <- plotPCA(vsd_Liver_gene, intgroup=c("Group"),  ntop = 300)   +  
+  aes(shape = Group, color = Group) +
+  theme_classic() + scale_color_manual(values = Fivegroups_color) + 
+  scale_shape_manual(values = Fivegroups_shape)
+
+ggsave(filename = paste0(dir_github_script,
+                         "Figures/Figure_2A_Liver.png"),
+       pd_Liver_gene, width = 6, height = 4)
+
+
+##### Necessary formatting to make UpsetPlot - sDEG 
+list_sDEG_four_organs_for_upsetPlot_format_XXfvsXYm <- list_to_matrix(list_sDEG_four_organs_for_upsetPlot_XXfvsXYm) %>% data.frame()
+
+##### Plot Figure 2B - Four organs sDEG: XX.F vs XY.M 
+sDEG_intersect_upsetPlot_XXfvsXYm <- upset(list_sDEG_four_organs_for_upsetPlot_format_XXfvsXYm,
+                                   keep.order = T,
+                                   # order.by = "freq",
+                                   nsets = 8,
+                                   mainbar.y.label = "Count of sDEG",
+                                   sets.x.label = "Significant sDEG total",
+                                   point.size = 2.8,
+                                   line.size = 1.3,
+                                   text.scale = 1.9)
+png(filename = paste0(dir_github_script,
+                      "Figures/Figure_2B_sDEG_upsetPlot_XXfvsXYm.png"), width = 480, height = 360)
+sDEG_intersect_upsetPlot_XXfvsXYm
+dev.off()
+
+```
+
+### Figure 3.
+
+```{r}
+## Figure 3. Concordant expression between sDETE and nearest sDEG or slncRNA.
+
+### Read in formatted count matrix. 
+#### Generate Figures - Figure 3A Cumulative distribution of distances between 
+#### sDETE/sDEG/slncRNA and nearest sDETE/sDEG/slncRNA in mouse liver
+##### sDETE
+sDETE_to_sDETE_distance_Both <- readRDS(file = paste0(dir_github_script, 
+                                       "rds_files/sDETE_to_sDETE_distance_Both.rds"))
+sDETE_to_sDETE_distance_Pheno <- readRDS(file = paste0(dir_github_script, 
+                                       "rds_files/sDETE_to_sDETE_distance_Pheno.rds"))
+nonsDETE_to_sDETE_distance_Both <- readRDS(file = paste0(dir_github_script, 
+                                       "rds_files/nonsDETE_to_sDETE_distance_Both.rds"))
+nonsDETE_to_sDETE_distance_Pheno <- readRDS(file = paste0(dir_github_script, 
+                                       "rds_files/nonsDETE_to_sDETE_distance_Pheno.rds"))
+
+##### sDEG
+DEG_to_DEG_distance_Both <- readRDS(file = paste0(dir_github_script, 
+                                       "rds_files/DEG_to_DEG_distance_Both.rds"))
+DEG_to_DEG_distance_Pheno <- readRDS(file = paste0(dir_github_script, 
+                                       "rds_files/DEG_to_DEG_distance_Pheno.rds"))
+nonDEG_to_DEG_distance_Both <- readRDS(file = paste0(dir_github_script, 
+                                       "rds_files/nonDEG_to_DEG_distance_Both.rds"))
+nonDEG_to_DEG_distance_Pheno <- readRDS(file = paste0(dir_github_script, 
+                                       "rds_files/nonDEG_to_DEG_distance_Pheno.rds"))
+
+##### slncRNA
+slncRNA_to_slncRNA_distance_Both <- readRDS(file = paste0(dir_github_script, 
+                                       "rds_files/slncRNA_to_slncRNA_distance_Both.rds"))
+slncRNA_to_slncRNA_distance_Pheno <- readRDS(file = paste0(dir_github_script, 
+                                       "rds_files/slncRNA_to_slncRNA_distance_Pheno.rds"))
+nonslncRNA_to_slncRNA_distance_Both_reformated <- readRDS(file = paste0(dir_github_script, 
+                                       "rds_files/nonslncRNA_to_slncRNA_distance_Both_reformated.rds"))
+nonslncRNA_to_slncRNA_distance_Pheno_reformated <- readRDS(file = paste0(dir_github_script, 
+                                       "rds_files/nonslncRNA_to_slncRNA_distance_Pheno_reformated.rds"))
+
+
+#### Generate Figures - Figure 3B Cumulative distribution of distances between 
+#### sDETE and nearest sDEG in mouse liver
+all_DETE_DEG_distance_Both <- readRDS(file = paste0(dir_github_script, 
+                                       "rds_files/all_DETE_DEG_distance_Both.rds"))
+all_DETE_DEG_distance_Pheno <- readRDS(file = paste0(dir_github_script, 
+                                       "rds_files/all_DETE_DEG_distance_Pheno.rds"))
+random_draft_DETE_to_gene_distance_Both <- readRDS(file = paste0(dir_github_script, 
+                                       "rds_files/random_draft_DETE_to_gene_distance_Both.rds"))
+random_draft_DETE_to_gene_distance_Pheno <- readRDS(file = paste0(dir_github_script, 
+                                       "rds_files/random_draft_DETE_to_gene_distance_Pheno.rds"))
+
+#### Generate Figures - Figure 3C Cumulative distribution of distances between 
+#### sDETE and nearest slncRNA in mouse liver
+slncRNA_to_sDETE_distance_Both <- readRDS(file = paste0(dir_github_script, 
+                                       "rds_files/slncRNA_to_sDETE_distance_Both.rds"))
+slncRNA_to_sDETE_distance_Pheno <- readRDS(file = paste0(dir_github_script, 
+                                       "rds_files/slncRNA_to_sDETE_distance_Pheno.rds"))
+random_draft_DETE_to_lncRNA_distance_Both <- readRDS(file = paste0(dir_github_script, 
+                                       "rds_files/random_draft_DETE_to_lncRNA_distance_Both.rds"))
+random_draft_DETE_to_lncRNA_distance_Pheno <- readRDS(file = paste0(dir_github_script, 
+                                       "rds_files/random_draft_DETE_to_lncRNA_distance_Pheno.rds"))
+
+
+
+
+##### Plot Figure 3A- sDETE/sDEG/slncRNA and nearest sDETE/sDEG/slncRNA
+###### sDETE
+png(filename = paste0(dir_github_script, "Figures/Figure_3A_sDETE.png"), width = 720, height = 720, res = 144)
+
+
+par(pty='s')  # force the plot to be square before we start
+plot((sDETE_to_sDETE_distance_Both[[1]] %>% filter(dist_check > 0))$dist_check %>% log10() %>% ecdf(), 
+     xlab = "Log10 distance to nearest sDETE",
+     xlim = c(0, 15),
+     ylab = "Cumulative proportion",
+     main = "Cumulative Distribution of\n Distance to sDETE", 
+     col = "#2B5DB4", lwd = 4)
+lines((sDETE_to_sDETE_distance_Pheno[[1]] %>% filter(dist_check > 0))$dist_check %>% log10() %>% ecdf(), 
+      col = "#FF9664", lwd = 4)
+lines((nonsDETE_to_sDETE_distance_Both[[1]] %>% filter(dist_check > 0))$dist_check %>% log10() %>% ecdf(), 
+      col = "#63B8CC", lwd = 4)
+lines((nonsDETE_to_sDETE_distance_Pheno[[1]] %>% filter(dist_check > 0))$dist_check %>% log10() %>% ecdf(),
+      col = "#AA63BF", lwd = 4)
+# lines((ERVK_DETE_DEG_distance_Pheno[[2]] %>% filter(dist_check > 0))$dist_check %>% log10() %>% ecdf(), 
+#       col = "light blue")
+abline(v = 5, col = "blue")
+legend('bottomright', 
+       legend=c("sDETE(XX.FvsXY.M)",
+                "sDETE(XY.FvsXY.M)",
+                "sDETE_and_randomTE(XX.FvsXY.M)",
+                "sDETE_and_randomTE(XY.FvsXY.M)",
+                "Log10 distance = 5"),  # text in the legend
+       col=c("#2B5DB4", "#FF9664", "#63B8CC", "#AA63BF","blue"),  # point colors
+       pch=12,
+       cex = 0.6) 
+dev.off()
+
+
+###### sDEG 
+png(filename = paste0(dir_github_script, "Figures/Figure_3A_sDEG.png"), width = 720, height = 720, res = 144)
+
+par(pty='s')  # force the plot to be square before we start
+plot((DEG_to_DEG_distance_Both[[1]] %>% filter(dist_check > 0))$dist_check %>% log10() %>% ecdf(), 
+     xlab = "Log10 distance to nearest sDEG",
+     xlim = c(0, 15),
+     ylab = "Cumulative proportion",
+     main = "Cumulative Distribution of\n Distance to sDEG", 
+     col = "#2B5DB4", lwd = 4)
+lines((DEG_to_DEG_distance_Pheno[[1]] %>% filter(dist_check > 0))$dist_check %>% log10() %>% ecdf(), 
+      col = "#FF9664", lwd = 4)
+lines((nonDEG_to_DEG_distance_Both[[1]] %>% filter(dist_check > 0))$dist_check %>% log10() %>% ecdf(), 
+      col = "#63B8CC", lwd = 4)
+lines((nonDEG_to_DEG_distance_Pheno[[1]] %>% filter(dist_check > 0))$dist_check %>% log10() %>% ecdf(),
+      col = "#AA63BF", lwd = 4)
+# lines((ERVK_DETE_DEG_distance_Pheno[[2]] %>% filter(dist_check > 0))$dist_check %>% log10() %>% ecdf(), 
+#       col = "light blue")
+abline(v = 5, col = "blue")
+legend('bottomright', 
+       legend=c("sDEG(XX.FvsXY.M)",
+                "sDEG(XY.FvsXY.M)",
+                "sDEG_and_randomGene(XX.FvsXY.M)",
+                "sDEG_and_randomGene(XY.FvsXY.M)",
+                "Log10 distance = 5"),  # text in the legend
+       col=c("#2B5DB4", "#FF9664", "#63B8CC", "#AA63BF","blue"),  # point colors
+       pch=12,
+       cex = 0.5)
+
+dev.off()
+
+###### slncRNA
+
+png(filename = paste0(dir_github_script, "Figures/Figure_3A_slncRNA.png"), 
+    width = 720, height = 720, res = 144)
+
+
+par(pty='s')  # force the plot to be square before we start
+plot((slncRNA_to_slncRNA_distance_Both[[1]] %>% filter(dist_check>0))$dist_check %>% log10() %>% ecdf(), 
+     xlab = "Log10 distance to nearest slncRNA",
+     xlim = c(0, 15),
+     ylim = c(0, 1), 
+     ylab = "Cumulative proportion",
+     main = "Cumulative Distribution of\n Distance to slncRNA", 
+     col = "#2B5DB4", lwd = 4)
+lines((slncRNA_to_slncRNA_distance_Pheno[[1]] %>% filter(dist_check>0))$dist_check %>% log10() %>% ecdf(), 
+      col = "#FF9664", lwd = 4)
+lines((nonslncRNA_to_slncRNA_distance_Both_reformated )$dist_check %>% log10() %>% ecdf(), 
+      col = "#63B8CC", lwd = 4)
+lines((nonslncRNA_to_slncRNA_distance_Pheno_reformated )$dist_check %>% log10() %>% ecdf(),
+      col = "#AA63BF", lwd = 4)
+#       col = "light blue")
+abline(v = 5, col = "blue")
+legend('bottomright', 
+       legend=c("slncRNA(XX.FvsXY.M)",
+                "slncRNA(XY.FvsXY.M)",
+                "slncRNA_and_randomlncRNA(XX.FvsXY.M)",
+                "slncRNA_and_randomlncRNA(XY.FvsXY.M)",
+                "Log10 distance = 5"),  # text in the legend
+       col=c("#2B5DB4", "#FF9664", "#63B8CC", "#AA63BF","blue"),  # point colors
+       pch=12,
+       cex = 0.45) 
+dev.off()
+
+
+
+##### Plot Figure 3B - sDETE and nearest sDEG
+png(filename = paste0(dir_github_script, "Figures/Figure_3B_sDETE_and_sDEG.png"),
+    width = 720, height = 720, res = 132)
+
+par(pty='s')  # force the plot to be square before we start
+plot((all_DETE_DEG_distance_Both[[1]])$dist_check %>% log10() %>% ecdf(), 
+     xlab = "Log10 distance to nearest DETE",
+     xlim = c(0, 15),
+     ylim = c(0, 1), 
+     ylab = "Cumulative proportion",
+     main = "Cumulative Distribution of\n Distance from sDETE to gene", 
+     col = "#2B5DB4", lwd = 4)
+lines((all_DETE_DEG_distance_Pheno[[1]])$dist_check %>% log10() %>% ecdf(), 
+      col = "#FF9664", lwd = 4)
+lines(random_draft_DETE_to_gene_distance_Both %>% log10() %>% ecdf(), 
+      col = "#63B8CC", lwd = 4)
+lines(random_draft_DETE_to_gene_distance_Pheno %>% log10() %>% ecdf(), 
+      col = "#AA63BF", lwd = 4)
+abline(v = 5, col = "blue")
+legend('bottomright', 
+       legend=c("sDETE_and_sDEG(XX.FvsXY.M)",
+                "sDETE_and_sDEG(XY.FvsXY.M)",
+                "sDETE_and_randomGene(XX.FvsXY.M)",
+                "sDETE_and_randomGene(XY.FvsXY.M)",
+                "Log10 distance = 5"),  # text in the legend
+       col=c("#2B5DB4", "#FF9664", "#63B8CC", "#AA63BF","blue"),  # point colors
+       pch=15,
+       cex = 0.6)
+
+dev.off()
+
+
+##### Plot Figure 3C - sDETE and nearest slncRNA
+
+png(filename = paste0(dir_github_script, "Figures/Figure_3C_sDETE_to_slncRNA.png"), width = 720, height = 720, res = 144)
+
+
+par(pty='s')  # force the plot to be square before we start
+plot((slncRNA_to_sDETE_distance_Both[[1]])$dist_check %>% log10() %>% ecdf(), 
+     xlab = "Log10 distance to nearest sDETE",
+     xlim = c(0, 15),
+     ylim = c(0, 1), 
+     ylab = "Cumulative proportion",
+     main = "Cumulative Distribution of Distance\n between sDETE and lncRNA/slncRNA", 
+     col = "#2B5DB4", lwd = 4)
+lines((slncRNA_to_sDETE_distance_Pheno[[1]])$dist_check %>% log10() %>% ecdf(), 
+      col = "#FF9664", lwd = 4)
+lines((random_draft_DETE_to_lncRNA_distance_Both ) %>% log10() %>% ecdf(), 
+      col = "#63B8CC", lwd = 4)
+lines((random_draft_DETE_to_lncRNA_distance_Pheno ) %>% log10() %>% ecdf(),
+      col = "#AA63BF", lwd = 4)
+# lines((ERVK_DETE_DEG_distance_Pheno[[2]] %>% filter(dist_check > 0))$dist_check %>% log10() %>% ecdf(), 
+#       col = "light blue")
+abline(v = 5, col = "blue")
+legend('bottomright', 
+       legend=c("sDETE_and_slncRNA(XX.FvsXY.M)",
+                "sDETE_and_slncRNA(XY.FvsXY.M)",
+                "sDETE_and_randomlncRNA(XX.FvsXY.M)",
+                "sDETE_and_randomlncRNA(XY.FvsXY.M)",
+                "Log10 distance = 5"),  # text in the legend
+       col=c("#2B5DB4", "#FF9664", "#63B8CC", "#AA63BF","blue"),  # point colors
+       pch=12,
+       cex = 0.5) 
+dev.off()
+
+
+```
+
+

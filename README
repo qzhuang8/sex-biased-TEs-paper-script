@@ -6,7 +6,10 @@ Preprocessed files have been saved in the rds folder and most subpanels of figur
 can be generated with the script. Exceptions are the ones directly plotted with 
 precalculated stats/numbers. Such as some bar plots. 
 
-To use the script, download and modify the directory to local folder accordingly. 
+The main script to reproduce main figures is Paper_figure_script.Rmd. To use the script, download and modify the directory to local folder accordingly. 
+We also include scripts (Figure1_intermediate_files et. al.) that create intermediate files used in Paper_figure_script.Rmd. 
+Some intermediate files required high computing resources to be generated on a laptop/desktop. We directly include such intermediate files generated on cluster instead. 
+
 
 The script is licensed under a Creative Commons Attribution 4.0 International License. 
 
