@@ -1,0 +1,303 @@
+## This script is to explain how intermediate files were prepared.
+## Some intermediate files had a high demand for computing resources and were 
+### separately prepared on cluster instead.
+#### For the naming of variables, "_Both" is used as the abbreviation of "_XXfvsXYm"
+#### For the naming of variables, "_Pheno" is used as the abbreviation of "_XYfvsXYm"
+
+
+Figure 3. 
+
+List of intermediate files
+3.1) sDETE_to_sDETE_distance_Both.rds
+3.2) sDETE_to_sDETE_distance_Pheno.rds
+3.3) nonsDETE_to_sDETE_distance_Both.rds
+3.4) nonsDETE_to_sDETE_distance_Pheno.rds
+3.5) DEG_to_DEG_distance_Both.rds
+3.6) DEG_to_DEG_distance_Pheno.rds
+3.7) nonDEG_to_DEG_distance_Both.rds
+3.8) nonDEG_to_DEG_distance_Pheno.rds
+3.9) slncRNA_to_slncRNA_distance_Both.rds
+3.10) slncRNA_to_slncRNA_distance_Pheno.rds
+3.11) nonslncRNA_to_slncRNA_distance_Both_reformated.rds
+3.12) nonslncRNA_to_slncRNA_distance_Pheno_reformated.rds
+3.13) all_DETE_DEG_distance_Both.rds
+3.14) all_DETE_DEG_distance_Pheno.rds
+3.15) random_draft_DETE_to_gene_distance_Both.rds
+3.16) random_draft_DETE_to_gene_distance_Pheno.rds
+3.17) slncRNA_to_sDETE_distance_Both.rds
+3.18) slncRNA_to_sDETE_distance_Pheno.rds
+3.19) random_draft_DETE_to_lncRNA_distance_Both.rds
+3.20) random_draft_DETE_to_lncRNA_distance_Pheno.rds
+
+
+### Figure 3.
+#### Libraries and global variables
+```{r}
+## Library
+suppressMessages(library(tidyverse))
+suppressMessages(library(readxl))
+suppressMessages(library(dplyr))
+
+
+## global variable
+dir_github_script <- "G:/My Drive/github_script/" ## replace with your local directory
+dir_TE_exp <- "G:/My Drive/wrapup/Brain_paper/Four_organ/result_excels/" 
+dir_github_intermediate_files_fig3 <- paste0(dir_github_script, 
+                                             "intermediate_files_prep/Figure3/collection_intermediate_files/")
+
+
+## global function
+check_region_region_distance <- function(tb1, tb2, compared_to_itself = FALSE){
+  collector_tb1 <- NULL
+  collector_tb2 <- NULL
+  list_of_chr <- paste0("chr", c(1:19, "X", "Y"))
+
+  for(i in list_of_chr){
+      tmp_tb1 <- tb1 %>% filter(chr == i) %>% mutate(dist_check = NULL)
+      tmp_tb2 <- tb2 %>% filter(chr == i) %>% mutate(dist_check = NULL)
+      if(dim(tmp_tb1)[[1]] > 0 && dim(tmp_tb2)[[1]] > 0 && dim(tmp_tb1)[[1]] > 1){
+          for(j in 1:dim(tmp_tb1)[[1]]){
+            dist_start_start <- tmp_tb1[j, "start"][[1]] - tmp_tb2$start
+            dist_start_end <- tmp_tb1[j, "start"][[1]] - tmp_tb2$end
+            dist_end_start <- tmp_tb1[j, "end"][[1]] - tmp_tb2$start
+            dist_end_end <- tmp_tb1[j, "end"][[1]] - tmp_tb2$end
+            
+            if(compared_to_itself){
+              ## allowing comparing the list to itself by removing the identical region in counting distance
+              index_to_not_identical_v1 <- which(dist_start_start != 0)
+              index_to_not_identical_v2 <- which(dist_end_end != 0)
+              index_to_not_identical <- intersect(index_to_not_identical_v1, index_to_not_identical_v2)
+              dist_start_start <- dist_start_start[index_to_not_identical]
+              dist_start_end <- dist_start_end[index_to_not_identical]
+              dist_end_start <- dist_end_start[index_to_not_identical]
+              dist_end_end <- dist_end_end[index_to_not_identical]
+
+            }
+            
+            
+            dist_start_start <- dist_start_start %>% as_tibble() %>% mutate(value = as.double(value))
+            dist_start_end <- dist_start_end %>% as_tibble() %>% mutate(value = as.double(value))
+            dist_end_start <- dist_end_start %>% as_tibble() %>% mutate(value = as.double(value))
+            dist_end_end <- dist_end_end %>% as_tibble() %>% mutate(value = as.double(value))
+
+            min_check1 <- min(dist_start_start * dist_start_end)
+            min_check2 <- min(dist_end_start * dist_end_end)
+            min_check <- min(min_check1, min_check2)
+            if(min_check<=0){
+              tmp_tb1[j, "dist_check"] <- 0
+            } else if (min_check>0){
+              tmp_tb1[j, "dist_check"] <- min(abs(dist_start_start), abs(dist_start_end),
+                                              abs(dist_end_start), abs(dist_end_end))
+
+              
+            }
+            
+            # dist1 <- tmp_tb1[j, "pos"][[1]] - tmp_tb2$start
+            # dist2 <- tmp_tb1[j, "pos"][[1]] - tmp_tb2$end
+            # dist1 <- dist1 %>% as_tibble() %>% mutate(value = as.double(value))
+            # dist2 <- dist2 %>% as_tibble() %>% mutate(value = as.double(value))
+            # min_check <- min(dist1 * dist2)
+            # if(min_check<=0){
+            #   tmp_tb1[j, "dist_check"] <- 0
+            # } else if (min_check>0){
+            #   tmp_tb1[j, "dist_check"] <- min(abs(dist1), abs(dist2))
+            # }
+          }
+        
+        for(k in 1:dim(tmp_tb2)[[1]]){
+            dist_start_start <- tmp_tb2[k, "start"][[1]] - tmp_tb1$start
+            dist_start_end <- tmp_tb2[k, "start"][[1]] - tmp_tb1$end
+            dist_end_start <- tmp_tb2[k, "end"][[1]] - tmp_tb1$start
+            dist_end_end <- tmp_tb2[k, "end"][[1]] - tmp_tb1$end
+
+            
+            if(compared_to_itself){
+              ## allowing comparing the list to itself by removing the identical region in counting distance
+              index_to_not_identical_v1 <- which(dist_start_start != 0)
+              index_to_not_identical_v2 <- which(dist_end_end != 0)
+              index_to_not_identical <- intersect(index_to_not_identical_v1, index_to_not_identical_v2)
+              dist_start_start <- dist_start_start[index_to_not_identical]
+              dist_start_end <- dist_start_end[index_to_not_identical]
+              dist_end_start <- dist_end_start[index_to_not_identical]
+              dist_end_end <- dist_end_end[index_to_not_identical]
+
+            }
+            
+            dist_start_start <- dist_start_start %>% as_tibble() %>% mutate(value = as.double(value))
+            dist_start_end <- dist_start_end %>% as_tibble() %>% mutate(value = as.double(value))
+            dist_end_start <- dist_end_start %>% as_tibble() %>% mutate(value = as.double(value))
+            dist_end_end <- dist_end_end %>% as_tibble() %>% mutate(value = as.double(value))
+            min_check1 <- min(dist_start_start * dist_start_end)
+            min_check2 <- min(dist_end_start * dist_end_end)
+            min_check <- min(min_check1, min_check2)
+            if(min_check<=0){
+              tmp_tb2[k, "dist_check"] <- 0
+            } else if (min_check>0){
+              tmp_tb2[k, "dist_check"] <- min(abs(dist_start_start), abs(dist_start_end),
+                                              abs(dist_end_start), abs(dist_end_end))
+              
+
+            }
+
+            # dist1 <- tmp_tb2[k, "start"][[1]] - tmp_tb1$pos
+            # dist2 <- tmp_tb2[k, "end"][[1]] - tmp_tb1$pos
+            # dist1 <- dist1 %>% as_tibble() %>% mutate(value = as.double(value))
+            # dist2 <- dist2 %>% as_tibble() %>% mutate(value = as.double(value))
+            # min_check <- min(dist1 * dist2)
+            # if(min_check<=0){
+            #   tmp_tb2[k, "dist_check"] <- 0
+            # } else if (min_check>0){
+            #   tmp_tb2[k, "dist_check"] <- min(abs(dist1), abs(dist2))
+            # }
+        }
+          collector_tb1 <- rbind(collector_tb1, tmp_tb1)
+          collector_tb2 <- rbind(collector_tb2, tmp_tb2)
+      }
+  }
+  return(list(collector_tb1, collector_tb2))
+}
+
+
+
+```
+
+### sDETE and sDETE
+#### Intermediate file 3.1) sDETE_to_sDETE_distance_Both.rds
+#### Intermediate file 3.2) sDETE_to_sDETE_distance_Pheno.rds
+#### Intermediate file 3.3) nonsDETE_to_sDETE_distance_Both.rds
+#### Intermediate file 3.4) nonsDETE_to_sDETE_distance_Pheno.rds
+
+```{r}
+dir_TE_exp_fig3 <- paste0(dir_github_script, "intermediate_files_prep/Figure3/")
+dir_to_Liver_TE_exp <- dir_TE_exp_fig3
+
+### Check sDETE colocalizing with peer sDETE
+Liver_Both_res3 <- readRDS(file = paste0(dir_to_Liver_TE_exp, "Liver_Both_res3.rds")) %>% 
+  separate(chromosome.start.stop, c("chr", "start", "end"))%>%
+  mutate(chr = factor(chr), start = as.numeric(start), end = as.numeric(end)) %>% 
+  filter(!is.na(start))
+Liver_Pheno_res3 <- readRDS(file = paste0(dir_to_Liver_TE_exp, "Liver_Pheno_res3.rds"))%>% 
+  separate(chromosome.start.stop, c("chr", "start", "end"))%>%
+  mutate(chr = factor(chr), start = as.numeric(start), end = as.numeric(end))%>% 
+  filter(!is.na(start))
+
+Liver_Both_sDETE <- Liver_Both_res3 %>% filter(padj < 0.05, abs(log2FoldChange) > 1)
+Liver_Pheno_sDETE <- Liver_Pheno_res3 %>% filter(padj < 0.05, abs(log2FoldChange) > 1)
+Liver_Both_nonsDETE <- left_join(Liver_Both_res3, Liver_Both_sDETE %>% mutate(sDETE = "Yes")) %>% 
+                          filter(is.na(sDETE))
+Liver_Pheno_nonsDETE <- left_join(Liver_Pheno_res3, Liver_Pheno_sDETE %>% mutate(sDETE = "Yes")) %>% 
+                          filter(is.na(sDETE))
+
+sDETE_to_sDETE_distance_Both <- check_region_region_distance(Liver_Both_sDETE, 
+                                                      Liver_Both_sDETE, compared_to_itself = TRUE)
+sDETE_to_sDETE_distance_Pheno <- check_region_region_distance(Liver_Pheno_sDETE, 
+                                                         Liver_Pheno_sDETE, compared_to_itself = TRUE)
+### nonsDETE_to_sDETE_distance_Both and nonsDETE_to_sDETE_distance_Pheno takes a long time to generate
+# nonsDETE_to_sDETE_distance_Both <- check_region_region_distance(Liver_Both_nonsDETE,
+#                                                       Liver_Both_sDETE, compared_to_itself = TRUE)
+# nonsDETE_to_sDETE_distance_Pheno <- check_region_region_distance(Liver_Pheno_nonsDETE,
+#                                                       Liver_Pheno_sDETE, compared_to_itself = TRUE)
+
+
+saveRDS(sDETE_to_sDETE_distance_Both, file = paste0(dir_github_intermediate_files_fig3, "sDETE_to_sDETE_distance_Both.rds"))
+saveRDS(sDETE_to_sDETE_distance_Pheno, file = paste0(dir_github_intermediate_files_fig3, "sDETE_to_sDETE_distance_Pheno.rds"))
+saveRDS(nonsDETE_to_sDETE_distance_Both, file = paste0(dir_github_intermediate_files_fig3, "nonsDETE_to_sDETE_distance_Both.rds"))
+saveRDS(nonsDETE_to_sDETE_distance_Pheno, file = paste0(dir_github_intermediate_files_fig3, "nonsDETE_to_sDETE_distance_Pheno.rds"))
+
+```
+
+
+### sDEG and sDEG
+#### Intermediate file 3.5) DEG_to_DEG_distance_Both.rds
+#### Intermediate file 3.6) DEG_to_DEG_distance_Pheno.rds
+#### Intermediate file 3.7) nonDEG_to_DEG_distance_Both.rds
+#### Intermediate file 3.8) nonDEG_to_DEG_distance_Pheno.rds
+
+```{r}
+### Liver DEG to DEG distance
+dir_TE_exp_fig3 <- paste0(dir_github_script, "intermediate_files_prep/Figure3/")
+dir_to_Liver_TE_exp <- dir_TE_exp_fig3
+dir_to_fourOrgan_TE_subfamily_exp <- dir_TE_exp_fig3
+
+## Read in DEG files in pairwise comparisons 
+Liver_Both_res3 <- readRDS(file = paste0(dir_to_Liver_TE_exp, "Liver_Both_res3.rds"))
+Liver_Pheno_res3 <- readRDS(file = paste0(dir_to_Liver_TE_exp, "Liver_Pheno_res3.rds"))
+pos_of_gene_dedup <- readRDS(file = paste0(dir_to_fourOrgan_TE_subfamily_exp, "pos_of_gene_dedup.rds"))
+
+
+Liver_DEG_list <- read_excel(paste0(dir_TE_exp_fig3, "Liver_DEG_recompiled.xlsx")) %>% mutate(gene = gene_symbol,
+                                                                                         DEG = "Yes") %>% 
+                                                                                  filter(abs(log_FC) > 1, log_CPM > 1, 
+                                                                                         deseq.adj.pvalue < 0.05)
+Liver_DEG_Both <- Liver_DEG_list %>% filter(Comparison == "XX.F vs XY.M")
+Liver_DEG_Pheno <- Liver_DEG_list %>% filter(Comparison == "XY.F vs XY.M")
+
+
+Liver_DEG_list_Both_pos <- left_join(Liver_DEG_Both, pos_of_gene_dedup %>% dplyr::rename(gene_symbol = gene))
+Liver_DEG_list_Pheno_pos <- left_join(Liver_DEG_Pheno, pos_of_gene_dedup %>% dplyr::rename(gene_symbol = gene))
+
+Liver_nonDEG_list_Both_pos <- (left_join(pos_of_gene_dedup %>% dplyr::rename(gene_symbol = gene), Liver_DEG_Both) %>% 
+                                          filter(is.na(Comparison )))[, 1:4]
+Liver_nonDEG_list_Pheno_pos <- (left_join(pos_of_gene_dedup %>% dplyr::rename(gene_symbol = gene), Liver_DEG_Pheno) %>% 
+                                          filter(is.na(Comparison )))[, 1:4]
+                                        
+
+## parameter "compared_to_itself = true" means the two inputs were identical region lists 
+# and will exclude comparison the same region to region itself in the process. 
+DEG_to_DEG_distance_Both <- check_region_region_distance(Liver_DEG_list_Both_pos, 
+                                                      Liver_DEG_list_Both_pos, compared_to_itself = TRUE)
+DEG_to_DEG_distance_Pheno <- check_region_region_distance(Liver_DEG_list_Pheno_pos, 
+                                                         Liver_DEG_list_Pheno_pos, compared_to_itself = TRUE)
+nonDEG_to_DEG_distance_Both <- check_region_region_distance(Liver_nonDEG_list_Both_pos,
+                                                      Liver_DEG_list_Both_pos, compared_to_itself = TRUE)
+nonDEG_to_DEG_distance_Pheno <- check_region_region_distance(Liver_nonDEG_list_Pheno_pos,
+                                                         Liver_DEG_list_Pheno_pos, compared_to_itself = TRUE)
+
+saveRDS(DEG_to_DEG_distance_Both, file = paste0(dir_github_intermediate_files_fig3, 
+                                                "DEG_to_DEG_distance_Both.rds"))
+saveRDS(DEG_to_DEG_distance_Pheno, file = paste0(dir_github_intermediate_files_fig3,
+                                                 "DEG_to_DEG_distance_Pheno.rds"))
+saveRDS(nonDEG_to_DEG_distance_Both, file = paste0(dir_github_intermediate_files_fig3,
+                                                   "nonDEG_to_DEG_distance_Both.rds"))
+saveRDS(nonDEG_to_DEG_distance_Pheno, file = paste0(dir_github_intermediate_files_fig3,
+                                                        "nonDEG_to_DEG_distance_Pheno.rds"))
+
+
+```
+
+
+### slncRNA and slncRNA
+#### Intermediate file 3.9) slncRNA_to_slncRNA_distance_Both.rds
+#### Intermediate file 3.10) slncRNA_to_slncRNA_distance_Pheno.rds
+#### Intermediate file 3.11) nonslncRNA_to_slncRNA_distance_Both_reformated.rds
+#### Intermediate file 3.12) nonslncRNA_to_slncRNA_distance_Pheno_reformated.rds
+
+```{r}
+
+```
+
+
+
+#### Intermediate file 3.13) all_DETE_DEG_distance_Both.rds
+#### Intermediate file 3.14) all_DETE_DEG_distance_Pheno.rds
+#### Intermediate file 3.15) random_draft_DETE_to_gene_distance_Both.rds
+#### Intermediate file 3.16) random_draft_DETE_to_gene_distance_Pheno.rds
+
+```{r}
+
+```
+
+
+#### Intermediate file 3.17) slncRNA_to_sDETE_distance_Both.rds
+#### Intermediate file 3.18) slncRNA_to_sDETE_distance_Pheno.rds
+#### Intermediate file 3.19) random_draft_DETE_to_lncRNA_distance_Both.rds
+#### Intermediate file 3.20) random_draft_DETE_to_lncRNA_distance_Pheno.rds
+
+```{r}
+
+```
+
+
+
+
+
