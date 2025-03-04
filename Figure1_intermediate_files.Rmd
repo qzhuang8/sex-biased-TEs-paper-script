@@ -1,0 +1,257 @@
+## This script is to explain how intermediate files were prepared.
+## Some intermediate files were either large or would take a long time to generate
+
+
+Figure 1. 
+
+List of intermediate files
+1.1) four_organ_gene_exp_filtered.rds: gene counts with extremely low coverage is removed.
+1.2) four_organs_gene_reformatted_v2.rds: gene counts reformated for downstream analysis
+1.3) four_organs_lncRNA_exp_raw_normalized.rds: 
+1.4) four_organs_lncRNA_exp_raw_normalized_v2.rds
+1.5) four_organ_TE_subfamily_exp_filtered.rds
+1.6) four_organs_TE_subfamily_reformatted_v2.rds
+1.7) heatmap_four_organ_normalized.rds
+1.8) Figure_1c_normalized_all_TEinstance.rds
+
+
+
+### Figure 1.
+
+#### Libraries and global variables
+```{r}
+## Libraries
+suppressMessages(library(tidyverse))
+suppressMessages(library( "DESeq2" ))
+suppressMessages(library(ggplot2))
+suppressMessages(library(ggfortify))
+suppressMessages(library(readxl))
+suppressMessages(library(dplyr))
+
+## global variable
+dir_github_script <- "G:/My Drive/github_script/" ## replace with your local directory
+
+```
+
+
+#### Intermediate file 1.1) four_organ_gene_exp_filtered.rds
+#### Intermediate file 1.2) four_organs_gene_reformatted_v2.rds
+```{r}
+# dir_github_script <- "G:/My Drive/github_script/"
+dir_github_intermediate_files <- paste0(dir_github_script, "intermediate_files_prep/Figure1/collection_intermediate_files/")
+
+dir_TE_exp <- paste0(dir_github_script, "intermediate_files_prep/Figure1/")
+dir_gene_exp <- paste0(dir_github_script, "intermediate_files_prep/Figure1/")
+gene_chr_pos <- read.csv(file = paste0(dir_TE_exp, "mm10_gene_loc_uniq.csv"), header = TRUE)
+
+#### Four organ gene exp PCA
+four_organ_gene_exp <- read.csv(paste0(dir_gene_exp, "Four_organs_gene_tb_raw.csv"))
+#### To include HXX14 that was missing. 
+heart_HXX14f <- read_excel(paste0(dir_gene_exp, "new_HXX14_counts.xlsx"))
+
+#### Remove genes with extremely low coverage: read sums < 50 
+four_organ_gene_exp_filtered <- four_organ_gene_exp[rowSums(four_organ_gene_exp[, 3:73 ])> 50,]
+
+four_organ_gene_exp_filtered <- left_join(four_organ_gene_exp_filtered, gene_chr_pos)  %>% na.omit()
+
+Sample.ID <- four_organ_gene_exp_filtered[,3:73] %>% names()
+Organ <- c(rep("Liver", 21), rep("Brain", 18), rep("Heart", 16), rep("Lung", 16))
+Group <- c(rep("XX.F", 4), rep("XY.M", 4), rep("XY.F", 4), rep("XO.F", 4), rep("XXpaf.F", 5),
+           rep("XX.F", 4), rep("XY.M", 4), rep("XY.F", 4), rep("XO.F", 3), rep("XXpaf.F", 3),
+           rep("XX.F", 2), rep("XY.M", 3), rep("XY.F", 4), rep("XO.F", 3), rep("XXpaf.F", 4),
+           rep("XX.F", 3), rep("XY.M", 3), rep("XY.F", 4), rep("XO.F", 3), rep("XXpaf.F", 3))
+gene.TE <- four_organ_gene_exp_filtered$Gene
+
+four_organs_colors <- c("#FF7F0E", "#2CA02C", "#1F77B4", "#e377c2")
+
+#### raw counts
+four_organ_normalized_raw <- four_organ_gene_exp_filtered[, 3:73]
+#### update to be norm counts, normalized by library depth of each sample.
+four_organ_sum_depths <- four_organ_normalized_raw %>% lapply(., sum) %>% unlist()
+four_organ_sum_depths_average <- four_organ_sum_depths  %>% mean()
+for(i in 1:70){
+  four_organ_normalized_raw[, i] <- (four_organ_normalized_raw[, i] * four_organ_sum_depths_average/four_organ_sum_depths[i]) %>% as.integer()
+}
+
+## To include chromosome information for gene
+Gene_chr <- four_organ_gene_exp_filtered$chr
+four_organ_normalized_raw_labeled <- cbind(four_organ_normalized_raw, Gene_chr)
+#### X-linked
+four_organ_normalized_raw_X <- four_organ_normalized_raw_labeled %>% filter(Gene_chr == "chrX") %>% dplyr::select(!"Gene_chr")
+#### Autosomal
+four_organ_normalized_raw_auto <- four_organ_normalized_raw_labeled %>% filter(Gene_chr != "chrX",
+                                                                               Gene_chr != "chrY",
+                                                                               Gene_chr != "chr1_GL456221_random",
+                                                                               Gene_chr != "chr4_JH584293_random",
+                                                                               Gene_chr != "chr4_JH584294_random",
+                                                                               Gene_chr != "chrX_GL456233_random",
+                                                              !is.na(Gene_chr)) %>% dplyr::select(!"Gene_chr")
+
+### reformat the data for downstream analysis
+four_organs_gene_reformatted_v2 <- cbind((t(four_organ_normalized_raw) ) %>% as_tibble(), 
+                                         Sample.ID,
+                                         Group,
+                                         Organ) %>% data.frame()
+four_organs_gene_reformatted_v2_auto <- cbind((t(four_organ_normalized_raw_auto) ) %>% as_tibble(), 
+                                              Sample.ID,
+                                              Group,
+                                              Organ) %>% data.frame()
+four_organs_gene_reformatted_v2_X <- cbind((t(four_organ_normalized_raw_X) ) %>% as_tibble(), 
+                                           Sample.ID,
+                                           Group,
+                                           Organ) %>% data.frame()
+
+
+rownames(four_organs_gene_reformatted_v2) <- four_organs_gene_reformatted_v2$Sample.ID
+
+
+saveRDS(four_organ_gene_exp_filtered, file = paste0(dir_github_intermediate_files, "four_organ_gene_exp_filtered.rds"))
+saveRDS(four_organs_gene_reformatted_v2, file = paste0(dir_github_intermediate_files, "four_organs_gene_reformatted_v2.rds"))
+
+```
+
+
+
+#### Intermediate file 1.3) four_organs_lncRNA_exp_raw_normalized.rds
+#### Intermediate file 1.4) four_organs_lncRNA_exp_raw_normalized_v2.rds
+
+```{r}
+# dir_github_script <- "G:/My Drive/github_script/"
+dir_lncRNA_count <- paste0(dir_github_script, "intermediate_files_prep/Figure1/")
+dir_github_intermediate_files <- paste0(dir_github_script, "intermediate_files_prep/Figure1/collection_intermediate_files/")
+
+#### read-in formated table of de novo lncRNA counts 
+Four_organs_lncRNA_candidates_v2 <- readRDS(file = paste0(dir_lncRNA_count, 
+                                                          "Four_organs_lncRNA_candidates_v2.rds"))
+
+#### Four organs - lncRNA expression PCA
+four_organs_lncRNA_exp <- Four_organs_lncRNA_candidates_v2
+four_organs_lncRNA_exp_filtered <- four_organs_lncRNA_exp[rowSums(four_organs_lncRNA_exp[, 2:72])>50, ]
+
+#### reformating for downstream analysis
+all_Sample.ID <- c(four_organs_lncRNA_exp_filtered[,2:72] %>% names())
+Organ <- c(rep("Liver", 21), rep("Brain", 18), rep("Heart", 16), rep("Lung", 16))
+Group <- c(rep("XX.F", 4), rep("XY.M", 4), rep("XY.F", 4), rep("XO.F", 4), rep("XXpaf.F", 5),
+           rep("XX.F", 4), rep("XY.M", 4), rep("XY.F", 4), rep("XO.F", 3), rep("XXpaf.F", 3),
+           rep("XX.F", 3), rep("XY.M", 3), rep("XY.F", 4), rep("XO.F", 2), rep("XXpaf.F", 4),
+           rep("XX.F", 3), rep("XY.M", 3), rep("XY.F", 4), rep("XO.F", 3), rep("XXpaf.F", 3))
+
+four_organs_lncRNA_index <- four_organs_lncRNA_exp_filtered$index
+
+four_organs_lncRNA_setup <- tibble(Sample.ID = all_Sample.ID,
+                                           Group = Group,
+                                           Organ = Organ)
+
+### Normalization
+four_organs_lncRNA_exp_raw <- four_organs_lncRNA_exp_filtered[, 2:72] %>% data.frame()
+rownames(four_organs_lncRNA_exp_raw) <- four_organs_lncRNA_index
+
+
+four_organs_lncRNA_exp_sum_depths <- four_organs_lncRNA_exp_raw %>% lapply(., sum) %>% unlist()
+four_organs_lncRNA_exp_sum_depths_average <- four_organs_lncRNA_exp_sum_depths  %>% mean()
+
+four_organs_lncRNA_exp_raw_normalized <- four_organs_lncRNA_exp_raw
+
+for(i in 1:71){
+  four_organs_lncRNA_exp_raw_normalized[, i] <- (four_organs_lncRNA_exp_raw[, i] * four_organs_lncRNA_exp_sum_depths_average/four_organs_lncRNA_exp_sum_depths[i]) %>% as.integer()
+}
+
+four_organs_lncRNA_exp_raw_normalized_v2 <- cbind((t(four_organs_lncRNA_exp_raw_normalized))%>%
+                                                    as_tibble(), 
+                                         all_Sample.ID,
+                                         Group,
+                                         Organ) %>% data.frame()
+
+## save intermediate files
+saveRDS(four_organs_lncRNA_exp_raw_normalized, file = paste0(dir_github_intermediate_files,
+                                                             "four_organs_lncRNA_exp_raw_normalized.rds"))
+saveRDS(four_organs_lncRNA_exp_raw_normalized_v2, file = paste0(dir_github_intermediate_files, 
+                                                                "four_organs_lncRNA_exp_raw_normalized_v2.rds"))
+
+
+```
+
+
+#### Intermediate file 1.5) four_organ_TE_subfamily_exp_filtered.rds
+#### Intermediate file 1.6) four_organs_TE_subfamily_reformatted_v2.rds
+```{r}
+# dir_github_script <- "G:/My Drive/github_script/"
+dir_TE_exp <- paste0(dir_github_script, "intermediate_files_prep/Figure1/")
+dir_github_intermediate_files <- paste0(dir_github_script, "intermediate_files_prep/Figure1/collection_intermediate_files/")
+
+four_organ_TE_subfamily_exp <- read.csv(paste0(dir_TE_exp, "four_organ_TEfamily_only_exp.csv"))
+
+four_organ_TE_subfamily_exp_filtered <- four_organ_TE_subfamily_exp[rowSums(four_organ_TE_subfamily_exp[, 2:69 ])> 50,]
+
+
+Sample.ID <- four_organ_TE_subfamily_exp_filtered[,2:69] %>% names()
+Organ <- c(rep("Brain", 17), rep("Heart", 15), rep("Lung", 16), rep("Liver", 20))
+Group <- c(rep("XX.F", 3), rep("XY.M", 4), rep("XY.F", 4), rep("XO.F", 3), rep("XXpaf.F", 3),
+           rep("XX.F", 2), rep("XY.M", 2), rep("XY.F", 4), rep("XO.F", 3), rep("XXpaf.F", 4),
+           rep("XX.F", 3), rep("XY.M", 3), rep("XY.F", 4), rep("XO.F", 3), rep("XXpaf.F", 3),
+           rep("XX.F", 4), rep("XY.M", 3), rep("XY.F", 4), rep("XO.F", 4), rep("XXpaf.F", 5))
+gene.TE <- four_organ_TE_subfamily_exp_filtered$gene.TE
+
+rownames(four_organ_TE_subfamily_exp_filtered) <- four_organ_TE_subfamily_exp_filtered$gene.TE
+four_organ_normalized_raw <- four_organ_TE_subfamily_exp_filtered[,2:69]
+
+
+four_organ_sum_depths <- four_organ_normalized_raw %>% lapply(., sum) %>% unlist()
+four_organ_sum_depths_average <- four_organ_sum_depths  %>% mean()
+
+for(i in 1:68){
+  four_organ_normalized_raw[, i] <- (four_organ_normalized_raw[, i] * four_organ_sum_depths_average/four_organ_sum_depths[i]) %>%
+    as.integer()
+}
+
+four_organs_TE_subfamily_reformatted <- cbind((t(four_organ_TE_subfamily_exp_filtered[,2:69] ) %>% as_tibble()), 
+                                              Sample.ID,
+                                              Group,
+                                              Organ) %>% data.frame()
+
+four_organs_TE_subfamily_reformatted_v2 <- cbind((t(four_organ_normalized_raw) ) %>% as_tibble(), 
+                                                 Sample.ID,
+                                                 Group,
+                                                 Organ) %>% data.frame()
+
+rownames(four_organs_TE_subfamily_reformatted) <- four_organs_TE_subfamily_reformatted$Sample.ID
+
+rownames(four_organs_TE_subfamily_reformatted_v2) <- four_organs_TE_subfamily_reformatted_v2$Sample.ID
+# colnames(four_organs_TE_subfamily_reformatted_v2) <- c(gene.TE, "Sample.ID", "Group", "Organ")
+
+
+saveRDS(four_organ_TE_subfamily_exp_filtered, file = paste0(dir_github_intermediate_files, 
+                                    "four_organ_TE_subfamily_exp_filtered.rds"))
+saveRDS(four_organs_TE_subfamily_reformatted_v2, file = paste0(dir_github_intermediate_files, 
+                                                               "four_organs_TE_subfamily_reformatted_v2.rds"))
+
+
+```
+
+
+
+#### Intermediate file 1.7) heatmap_four_organ_normalized.rds
+```{r}
+#### Intermediate file heatmap_four_organ_normalized.rds was prepared on cluster due to high computing demand
+heatmap_four_organ_normalized <- readRDS(file = paste0(four_organ_TE_subfamily_exp_filtered,
+                                                            "heatmap_four_organ_normalized.rds"))
+
+```
+
+
+
+#### Intermediate file 1.8) Figure_1c_normalized_all_TEinstance.rds
+```{r}
+#### Intermediate file Figure_1c_normalized_all_TEinstance.rds was prepared on cluster due to high computing demand
+#### Figure 1C
+Figure_1c_normalized_all_TEinstance <- readRDS(file = paste0(four_organ_TE_subfamily_exp_filtered,
+                                                        "Figure_1c_normalized_all_TEinstance.rds"))
+
+
+```
+
+
+
+
+
+
