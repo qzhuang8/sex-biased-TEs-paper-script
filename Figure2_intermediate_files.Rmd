@@ -1,0 +1,197 @@
+## This script is to explain how intermediate files were prepared.
+## Some intermediate files had a high demand for computing resources and were 
+### separately prepared on cluster instead.
+
+
+Figure 2. 
+
+List of intermediate files
+2.1) Brain_gene_data_filtered.rds
+2.2) Heart_gene_data_filtered.rds
+2.3) Lung_gene_data_filtered.rds
+2.4) Liver_gene_data_filtered.rds
+2.5) list_sDEG_four_organs_for_upsetPlot_XXfvsXYm.rds
+
+
+
+
+### Figure 2.
+
+#### Libraries and global variables
+```{r}
+## Libraries
+suppressMessages(library(tidyverse))
+suppressMessages(library( "DESeq2" ))
+suppressMessages(library(ggplot2))
+suppressMessages(library(ggfortify))
+suppressMessages(library(readxl))
+suppressMessages(library(dplyr))
+
+## global variable
+dir_github_script <- "G:/My Drive/github_script/" ## replace with your local directory
+
+
+```
+
+
+#### Intermediate file 1.1) Brain_gene_data_filtered.rds
+#### Intermediate file 1.1) Heart_gene_data_filtered.rds
+#### Intermediate file 1.1) Lung_gene_data_filtered.rds
+#### Intermediate file 1.1) Liver_gene_data_filtered.rds
+
+```{r}
+# dir_github_script <- "G:/My Drive/github_script/"
+dir_TE_exp <- paste0(dir_github_script, "intermediate_files_prep/Figure2/")
+dir_gene_exp <- paste0(dir_github_script, "intermediate_files_prep/Figure2/")
+
+gene_chr_pos <- read.csv(file = paste0(dir_TE_exp, "mm10_gene_loc_uniq.csv"), header = TRUE)
+dir_github_intermediate_files_fig2 <- paste0(dir_github_script, 
+                                             "intermediate_files_prep/Figure2/collection_intermediate_files/")
+
+#### Four organ gene exp PCA
+four_organ_gene_exp <- read.csv(paste0(dir_gene_exp, "Four_organs_gene_tb_raw.csv"))
+#### To include HXX14 that was missing. 
+heart_HXX14f <- read_excel(paste0(dir_gene_exp, "new_HXX14_counts.xlsx"))
+
+#### Remove genes with extremely low coverage: read sums < 50 
+four_organ_gene_exp_filtered <- four_organ_gene_exp[rowSums(four_organ_gene_exp[, 3:73 ])> 50,]
+
+four_organ_gene_exp_filtered <- left_join(four_organ_gene_exp_filtered, gene_chr_pos)  %>% na.omit()
+
+Sample.ID <- four_organ_gene_exp_filtered[,3:73] %>% names()
+Organ <- c(rep("Liver", 21), rep("Brain", 18), rep("Heart", 16), rep("Lung", 16))
+Group <- c(rep("XX.F", 4), rep("XY.M", 4), rep("XY.F", 4), rep("XO.F", 4), rep("XXpaf.F", 5),
+           rep("XX.F", 4), rep("XY.M", 4), rep("XY.F", 4), rep("XO.F", 3), rep("XXpaf.F", 3),
+           rep("XX.F", 2), rep("XY.M", 3), rep("XY.F", 4), rep("XO.F", 3), rep("XXpaf.F", 4),
+           rep("XX.F", 3), rep("XY.M", 3), rep("XY.F", 4), rep("XO.F", 3), rep("XXpaf.F", 3))
+gene.TE <- four_organ_gene_exp_filtered$Gene
+
+four_organs_colors <- c("#FF7F0E", "#2CA02C", "#1F77B4", "#e377c2")
+
+#### raw counts
+four_organ_normalized_raw <- four_organ_gene_exp_filtered[, 3:73]
+#### update to be norm counts, normalized by library depth of each sample.
+four_organ_sum_depths <- four_organ_normalized_raw %>% lapply(., sum) %>% unlist()
+four_organ_sum_depths_average <- four_organ_sum_depths  %>% mean()
+for(i in 1:70){
+  four_organ_normalized_raw[, i] <- (four_organ_normalized_raw[, i] * four_organ_sum_depths_average/four_organ_sum_depths[i]) %>% as.integer()
+}
+
+## To include chromosome information for gene
+Gene_chr <- four_organ_gene_exp_filtered$chr
+four_organ_normalized_raw_labeled <- cbind(four_organ_normalized_raw, Gene_chr)
+#### X-linked
+four_organ_normalized_raw_X <- four_organ_normalized_raw_labeled %>% filter(Gene_chr == "chrX") %>% dplyr::select(!"Gene_chr")
+#### Autosomal
+four_organ_normalized_raw_auto <- four_organ_normalized_raw_labeled %>% filter(Gene_chr != "chrX",
+                                                                               Gene_chr != "chrY",
+                                                                               Gene_chr != "chr1_GL456221_random",
+                                                                               Gene_chr != "chr4_JH584293_random",
+                                                                               Gene_chr != "chr4_JH584294_random",
+                                                                               Gene_chr != "chrX_GL456233_random",
+                                                              !is.na(Gene_chr)) %>% dplyr::select(!"Gene_chr")
+
+### reformat the data for downstream analysis
+four_organs_gene_reformatted_v2 <- cbind((t(four_organ_normalized_raw) ) %>% as_tibble(), 
+                                         Sample.ID,
+                                         Group,
+                                         Organ) %>% data.frame()
+four_organs_gene_reformatted_v2_auto <- cbind((t(four_organ_normalized_raw_auto) ) %>% as_tibble(), 
+                                              Sample.ID,
+                                              Group,
+                                              Organ) %>% data.frame()
+four_organs_gene_reformatted_v2_X <- cbind((t(four_organ_normalized_raw_X) ) %>% as_tibble(), 
+                                           Sample.ID,
+                                           Group,
+                                           Organ) %>% data.frame()
+
+
+rownames(four_organs_gene_reformatted_v2) <- four_organs_gene_reformatted_v2$Sample.ID
+
+
+#### Brain
+Brain_gene_data <- four_organs_gene_reformatted_v2 %>% as_tibble() %>%
+  filter(Organ == "Brain")
+length_gene_data_Brain <- length(Brain_gene_data)
+
+## remove rows with only 0 as entry value.
+Brain_gene_data_filtered <- Brain_gene_data[, c(which(colSums(Brain_gene_data %>% dplyr::select(where(is.numeric)))> 0),
+                                                (length_gene_data_Brain-2):length_gene_data_Brain)] %>% data.frame()
+
+rownames(Brain_gene_data_filtered) <- Brain_gene_data_filtered$Sample.ID
+
+saveRDS(Brain_gene_data_filtered, file = paste0(dir_github_intermediate_files_fig2, "Brain_gene_data_filtered.rds"))
+
+
+#### Heart
+Heart_gene_data <- four_organs_gene_reformatted_v2 %>% as_tibble() %>%
+  filter(Organ == "Heart", Sample.ID != "HXO6")
+
+length_gene_data_Heart <- length(Heart_gene_data)
+
+## remove rows with only 0 as entry value.
+Heart_gene_data_filtered <- Heart_gene_data[, c(which(colSums(Heart_gene_data %>% dplyr::select(where(is.numeric)))> 0),
+                                                (length_gene_data_Heart-2):length_gene_data_Heart)] %>% data.frame()
+
+rownames(Heart_gene_data_filtered) <- Heart_gene_data_filtered$Sample.ID
+
+saveRDS(Heart_gene_data_filtered, file = paste0(dir_github_intermediate_files_fig2, "Heart_gene_data_filtered.rds"))
+
+#### Lung
+Lung_gene_data <- four_organs_gene_reformatted_v2 %>% as_tibble() %>%
+  filter(Organ == "Lung")
+length_gene_data_Lung <- length(Lung_gene_data)
+
+
+## remove rows with only 0 as entry value.
+Lung_gene_data_filtered <- Lung_gene_data[, c(which(colSums(Lung_gene_data %>% dplyr::select(where(is.numeric)))> 0),
+                                              (length_gene_data_Lung-2):length_gene_data_Lung)] %>% data.frame()
+rownames(Lung_gene_data_filtered) <- Lung_gene_data_filtered$Sample.ID
+
+saveRDS(Lung_gene_data_filtered, file = paste0(dir_github_intermediate_files_fig2, "Lung_gene_data_filtered.rds"))
+
+#### Liver
+Liver_gene_data <- four_organs_gene_reformatted_v2 %>% as_tibble() %>%
+  filter(Organ == "Liver")
+length_gene_data_Liver <- length(Liver_gene_data)
+
+## remove rows with only 0 as entry value.
+Liver_gene_data_filtered <- Liver_gene_data[, c(which(colSums(Liver_gene_data %>% dplyr::select(where(is.numeric)))> 0),
+                                                (length_gene_data_Liver-2):length_gene_data_Liver)] %>% data.frame()
+
+rownames(Liver_gene_data_filtered) <- Liver_gene_data_filtered$Sample.ID
+
+saveRDS(Liver_gene_data_filtered, file = paste0(dir_github_intermediate_files_fig2, "Liver_gene_data_filtered.rds"))
+
+```
+
+
+```{r}
+# dir_github_script <- "G:/My Drive/github_script/"
+dir_gene_exp <- paste0(dir_github_script, "intermediate_files_prep/Figure2/")
+dir_github_intermediate_files_fig2 <- paste0(dir_github_script, 
+                                             "intermediate_files_prep/Figure2/collection_intermediate_files/")
+
+sDEG_four_organs <- read_excel(path = paste0(dir_gene_exp, 
+                                             "sDEG_four_organs_August08_2023.xlsx")) %>% 
+                          mutate(Comparison = factor(Comparison),
+                                 deseq2.p.value = as.double(deseq2.p.value))
+
+sDEG_brain_XXfvsXYm <- sDEG_four_organs %>% filter(Organ == "Brain", Comparison == "XX.F vs XY.M")
+sDEG_heart_XXfvsXYm <- sDEG_four_organs %>% filter(Organ == "Heart", Comparison == "XX.F vs XY.M")
+sDEG_lung_XXfvsXYm <- sDEG_four_organs %>% filter(Organ == "Lung", Comparison == "XX.F vs XY.M")
+sDEG_liver_XXfvsXYm <- sDEG_four_organs %>% filter(Organ == "Liver", Comparison == "XX.F vs XY.M")
+
+
+list_sDEG_four_organs_for_upsetPlot_XXfvsXYm <- list("Liver XX.FvsXY.M" = sDEG_liver_XXfvsXYm$gene_symbol,
+                                            "Heart XX.FvsXY.M" = sDEG_heart_XXfvsXYm$gene_symbol,
+                                            "Brain XX.FvsXY.M" = sDEG_brain_XXfvsXYm$gene_symbol,
+                                            "Lung XX.FvsXY.M" = sDEG_lung_XXfvsXYm$gene_symbol)
+
+
+saveRDS(list_sDEG_four_organs_for_upsetPlot_XXfvsXYm, file = paste0(dir_github_intermediate_files_fig2,
+                                       "list_sDEG_four_organs_for_upsetPlot_XXfvsXYm.rds"))
+
+
+```
+
