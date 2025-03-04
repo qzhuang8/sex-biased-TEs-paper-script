@@ -102,9 +102,9 @@ pd_four_organs_gene <- plotPCA(vsd_four_organs_gene, intgroup=c("Organ"),  ntop 
                                 "Lung (16)"))+
   ylim(-40, 45)
 
-##### Save Figure 1A - gene
-ggsave(filename = paste0(dir_github_script, "Figures/Figure_1A_PCA_gene.png"),
-       pd_four_organs_gene, width = 3, height = 3)
+# ##### Save Figure 1A - gene
+# ggsave(filename = paste0(dir_github_script, "Figures/Figure_1A_PCA_gene.png"),
+#        pd_four_organs_gene, width = 3, height = 3)
 
 #### lncRNA
 ##### Necessary formatting to run plotPCA
@@ -131,9 +131,9 @@ pd_four_organs_lncRNA <- plotPCA(vsd_four_organs_lncRNA, intgroup=c("Organ"),  n
                                 "Liver (21)",
                                 "Lung (16)"))
 
-##### Plot Figure 1A - lncRNA
-ggsave(filename = paste0(dir_github_script, "Figures/Figure_1A_PCA_lncRNA.png"),
-       pd_four_organs_lncRNA, width = 3, height = 3)
+# ##### Plot Figure 1A - lncRNA
+# ggsave(filename = paste0(dir_github_script, "Figures/Figure_1A_PCA_lncRNA.png"),
+#        pd_four_organs_lncRNA, width = 3, height = 3)
 
 
 #### TE subfamily
@@ -150,19 +150,19 @@ vsd_four_organs_TE_subfamily <- vst(dds_four_organs_TE_subfamily, blind=FALSE)
 pd_four_organs_TE_subfamily <- plotPCA(vsd_four_organs_TE_subfamily, intgroup=c("Organ"), ntop = 300) +
   aes(shape = Organ, color = Organ) + theme_classic() + 
   scale_shape_manual(values = c(1, 0, 2, 3),
-                                       labels = c("Brain (18)",
-                                                  "Heart (16)",
-                                                  "Liver (21)",
+                                       labels = c("Brain (17)",
+                                                  "Heart (15)",
+                                                  "Liver (20)",
                                                   "Lung (16)")) + 
   scale_color_manual(values = four_organs_colors,
-                     labels = c("Brain (18)",
-                                "Heart (16)",
-                                "Liver (21)",
+                     labels = c("Brain (17)",
+                                "Heart (15)",
+                                "Liver (20)",
                                 "Lung (16)"))
 
-##### Plot Figure 1A - TE subfamily
-ggsave(filename = paste0(dir_github_script, "Figures/Figure_1A_PCA_TE.png"),
-       pd_four_organs_TE_subfamily, width = 3, height = 3)
+# ##### Plot Figure 1A - TE subfamily
+# ggsave(filename = paste0(dir_github_script, "Figures/Figure_1A_PCA_TE.png"),
+#        pd_four_organs_TE_subfamily, width = 3, height = 3)
 
 
 ### Generate Figures - Fig 1B. Heatmap of TE expression (TE subfamily)
@@ -193,9 +193,9 @@ organ_biased_TEinstance_expression_plot <- ggplot(data = Figure_1c_normalized_al
         legend.title = element_blank(),
         axis.text.x = element_text(angle = 90, hjust = 0.5, vjust = 1))
 
-ggsave(filename = paste0(dir_github_script,
-                         "Figures/Figure_1C_violinPlot.png"),
-       organ_biased_TEinstance_expression_plot, width = 6, height = 4)
+# ggsave(filename = paste0(dir_github_script,
+#                          "Figures/Figure_1C_violinPlot.png"),
+#        organ_biased_TEinstance_expression_plot, width = 6, height = 4)
 
 
 ```
@@ -495,7 +495,7 @@ dev.off()
 
 
 ##### Plot Figure 3B - sDETE and nearest sDEG
-tiff(filename = paste0(dir_github_script, "Figures/Figure_3B_sDETE_and_sDEG.png"),
+png(filename = paste0(dir_github_script, "Figures/Figure_3B_sDETE_and_sDEG.png"),
     width = 720, height = 720, res = 132)
 
 par(pty='s')  # force the plot to be square before we start
