@@ -1,5 +1,6 @@
 ## This script is to explain how intermediate files were prepared.
-## Some intermediate files were either large or would take a long time to generate
+## Some intermediate files had a high demand for computing resources and were 
+### separately prepared on cluster instead.
 
 
 Figure 1. 
