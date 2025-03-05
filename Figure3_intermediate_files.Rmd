@@ -168,6 +168,7 @@ check_region_region_distance <- function(tb1, tb2, compared_to_itself = FALSE){
 #### Intermediate file 3.4) nonsDETE_to_sDETE_distance_Pheno.rds
 
 ```{r}
+# dir_github_script <- "G:/My Drive/github_script/" ## replace with your local directory
 dir_TE_exp_fig3 <- paste0(dir_github_script, "intermediate_files_prep/Figure3/")
 dir_to_Liver_TE_exp <- dir_TE_exp_fig3
 
@@ -214,7 +215,7 @@ saveRDS(nonsDETE_to_sDETE_distance_Pheno, file = paste0(dir_github_intermediate_
 #### Intermediate file 3.8) nonDEG_to_DEG_distance_Pheno.rds
 
 ```{r}
-### Liver DEG to DEG distance
+# dir_github_script <- "G:/My Drive/github_script/" ## replace with your local directory
 dir_TE_exp_fig3 <- paste0(dir_github_script, "intermediate_files_prep/Figure3/")
 dir_to_Liver_TE_exp <- dir_TE_exp_fig3
 dir_to_fourOrgan_TE_subfamily_exp <- dir_TE_exp_fig3
@@ -273,27 +274,213 @@ saveRDS(nonDEG_to_DEG_distance_Pheno, file = paste0(dir_github_intermediate_file
 #### Intermediate file 3.12) nonslncRNA_to_slncRNA_distance_Pheno_reformated.rds
 
 ```{r}
+# dir_github_script <- "G:/My Drive/github_script/" ## replace with your local directory
+dir_lncRNA_count <- paste0(dir_github_script, "intermediate_files_prep/Figure3/")
+dir_github_intermediate_files_fig3 <- paste0(dir_github_script, 
+                                             "intermediate_files_prep/Figure3/collection_intermediate_files/")
+
+
+Liver_slncRNA_XXfvsXYm <- readRDS(file = paste0(dir_lncRNA_count, "Liver_slncRNA_XXfvsXYm.rds"))
+Liver_slncRNA_XYfvsXYm <- readRDS(file = paste0(dir_lncRNA_count, "Liver_slncRNA_XYfvsXYm.rds"))
+
+##### check distance between nearest slncRNA
+slncRNA_to_slncRNA_distance_Both <- check_region_region_distance(Liver_slncRNA_XXfvsXYm, 
+                                                             Liver_slncRNA_XXfvsXYm, compared_to_itself = TRUE)
+slncRNA_to_slncRNA_distance_Pheno <- check_region_region_distance(Liver_slncRNA_XYfvsXYm, 
+                                                              Liver_slncRNA_XYfvsXYm, compared_to_itself = TRUE)
+
+#### Heavy for a local computer to calculate. Prepared ahead of time on cluster.
+# nonslncRNA_to_slncRNA_dist_Both <- check_region_region_distance(Liver_slncRNA_XXfvsXYm,
+#                                                       Liver_nonslncRNA_XXfvsXYm, compared_to_itself = TRUE)
+# nonslncRNA_to_slncRNA_dist_Pheno <- check_region_region_distance(Liver_slncRNA_XYfvsXYm,
+#                                                       Liver_nonslncRNA_XYfvsXYm, compared_to_itself = TRUE)
+nonslncRNA_to_slncRNA_dist_Both <- readRDS(file = paste0(dir_lncRNA_count, "nonslncRNA_to_slncRNA_dist_Both.rds"))
+nonslncRNA_to_slncRNA_dist_Pheno <- readRDS(file = paste0(dir_lncRNA_count, "nonslncRNA_to_slncRNA_dist_Pheno.rds"))
+
+saveRDS(slncRNA_to_slncRNA_distance_Both, file = paste0(dir_github_intermediate_files_fig3, 
+                                                "slncRNA_to_slncRNA_distance_Both.rds"))
+saveRDS(slncRNA_to_slncRNA_distance_Pheno, file = paste0(dir_github_intermediate_files_fig3,
+                                                 "slncRNA_to_slncRNA_distance_Pheno.rds"))
+saveRDS(nonslncRNA_to_slncRNA_dist_Both, file = paste0(dir_github_intermediate_files_fig3,
+                                                   "nonslncRNA_to_slncRNA_dist_Both.rds"))
+saveRDS(nonslncRNA_to_slncRNA_dist_Pheno, file = paste0(dir_github_intermediate_files_fig3,
+                                                        "nonslncRNA_to_slncRNA_dist_Pheno.rds"))
+
+
 
 ```
 
 
-
+### sDETE and sDEG
 #### Intermediate file 3.13) all_DETE_DEG_distance_Both.rds
 #### Intermediate file 3.14) all_DETE_DEG_distance_Pheno.rds
 #### Intermediate file 3.15) random_draft_DETE_to_gene_distance_Both.rds
 #### Intermediate file 3.16) random_draft_DETE_to_gene_distance_Pheno.rds
 
 ```{r}
+# dir_github_script <- "G:/My Drive/github_script/" ## replace with your local directory
+dir_to_Liver_TE_exp <- paste0(dir_github_script, "intermediate_files_prep/Figure3/")
+dir_github_intermediate_files_fig3 <- paste0(dir_github_script, 
+                                             "intermediate_files_prep/Figure3/collection_intermediate_files/")
+
+## Distance from all genes to TE
+#### All genes to all DETE
+liver_diff_TE_annot_genic <- readRDS(file = paste0(dir_to_Liver_TE_exp, "liver_diff_TE_annot_genic.rds")) %>% filter(abs(log2FoldChange) >= 1)
+liver_diff_TE_annot_genic_Both <- liver_diff_TE_annot_genic %>% filter(Comparison == "XX.F vs XY.M")
+liver_diff_TE_annot_genic_Pheno <- liver_diff_TE_annot_genic %>% filter(Comparison == "XY.F vs XY.M")
+
+
+#### Heavy for a local computer to calculate. Prepared ahead of time on cluster.
+# DETE_all_gene_distance_Both <- check_region_region_distance(liver_diff_TE_annot_genic_Both, pos_of_gene_dedup)
+# DETE_all_gene_distance_Pheno <- check_region_region_distance(liver_diff_TE_annot_genic_Pheno, pos_of_gene_dedup)
+DETE_all_gene_distance_Both <- readRDS(file = paste0(dir_to_Liver_TE_exp,
+              "DETE_all_gene_distance_Both.rds"))
+DETE_all_gene_distance_Pheno <- readRDS(file = paste0(dir_to_Liver_TE_exp,
+              "DETE_all_gene_distance_Pheno.rds"))
+
+
+
+random_draft_DETE_to_gene_distance_Both <- sample(DETE_all_gene_distance_Both[[2]]$dist_check, 1000)
+random_draft_DETE_to_gene_distance_Pheno <- sample(DETE_all_gene_distance_Pheno[[2]]$dist_check, 1000)
+
+for(i in 1:10000){
+   random_draft_DETE_to_gene_distance_Both <- (random_draft_DETE_to_gene_distance_Both + 
+                                                  sample(DETE_all_gene_distance_Both[[2]]$dist_check, 1000))/2
+   random_draft_DETE_to_gene_distance_Pheno <- (random_draft_DETE_to_gene_distance_Pheno + 
+                                                  sample(DETE_all_gene_distance_Pheno[[2]]$dist_check, 1000))/2
+}
+
+sDETE_to_gene_distance_Both_reformated <- tibble(dist_check = random_draft_DETE_to_gene_distance_Both)  %>% 
+                                              mutate(Group = "sDETE_to_random_gene(XX.FvsXY.M)") %>%
+                                dplyr::select(c( "dist_check", "Group")) %>% 
+                                    arrange(dist_check) %>% filter(dist_check > 0)
+
+sDETE_to_gene_distance_Pheno_reformated <- tibble(dist_check = random_draft_DETE_to_gene_distance_Pheno)  %>% 
+                                              mutate(Group = "sDETE_to_random_gene(XX.FvsXY.M)") %>%
+  dplyr::select(c("dist_check", "Group")) %>% 
+  arrange(dist_check) %>% filter(dist_check > 0)
+
+
+
+## Distance from DEG to nearest DETE
+Liver_DEG_list <- read_excel(paste0(dir_to_Liver_TE_exp, "Liver_DEG_recompiled.xlsx")) %>% mutate(gene = gene_symbol,
+                                                                                         DEG = "Yes") %>% 
+                                                                                  filter(abs(log_FC) > 1, log_CPM > 1, 
+                                                                                         deseq.adj.pvalue < 0.05)
+Liver_DEG_Both <- Liver_DEG_list %>% filter(Comparison == "XX.F vs XY.M")
+Liver_DEG_Pheno <- Liver_DEG_list %>% filter(Comparison == "XY.F vs XY.M")
+
+
+Liver_DEG_Both_pos <- left_join(Liver_DEG_Both, pos_of_gene_dedup %>% mutate()) %>% filter(!is.na(strand))
+Liver_DEG_Pheno_pos <- left_join(Liver_DEG_Pheno, pos_of_gene_dedup %>% mutate()) %>% filter(!is.na(strand))
+
+
+### DETE to DEG
+liver_diff_TE_annot_genic <- readRDS(file = paste0(dir_to_Liver_TE_exp, "liver_diff_TE_annot_genic.rds"))
+liver_diff_TE_annot_genic_Both <- liver_diff_TE_annot_genic %>% filter(Comparison == "XX.F vs XY.M") %>% 
+                                          filter(abs(log2FoldChange) >= 1)
+liver_diff_TE_annot_genic_Pheno <- liver_diff_TE_annot_genic %>% filter(Comparison == "XY.F vs XY.M")%>% 
+                                          filter(abs(log2FoldChange) >= 1)
+
+#### all DETE to DEG
+mm10_rmsk_TE_strand <- read.table(file = paste0(dir_to_Liver_TE_exp, "mm10_rmsk_TE_strand_label.gtf"), 
+                                  header = TRUE) %>% as_tibble() %>% mutate(chr = paste0("chr", chr))
+
+liver_diff_TE_annot_genic_Both_strand <- left_join(liver_diff_TE_annot_genic_Both, mm10_rmsk_TE_strand)
+all_DETE_DEG_distance_Pheno_strand <- left_join(liver_diff_TE_annot_genic_Pheno, mm10_rmsk_TE_strand)
+
+
+all_DETE_DEG_distance_Both <- check_region_region_distance(liver_diff_TE_annot_genic_Both_strand,
+                                                           Liver_DEG_Both_pos)
+all_DETE_DEG_distance_Pheno <- check_region_region_distance(all_DETE_DEG_distance_Pheno_strand,  
+                                                            Liver_DEG_Pheno_pos)
+
+
+saveRDS(all_DETE_DEG_distance_Both, file = paste0(dir_github_intermediate_files_fig3, 
+                                                "all_DETE_DEG_distance_Both.rds"))
+saveRDS(all_DETE_DEG_distance_Pheno, file = paste0(dir_github_intermediate_files_fig3,
+                                                 "all_DETE_DEG_distance_Pheno.rds"))
+saveRDS(random_draft_DETE_to_gene_distance_Both, file = paste0(dir_github_intermediate_files_fig3,
+                                                   "random_draft_DETE_to_gene_distance_Both.rds"))
+saveRDS(random_draft_DETE_to_gene_distance_Pheno, file = paste0(dir_github_intermediate_files_fig3,
+                                                        "random_draft_DETE_to_gene_distance_Pheno.rds"))
+
+
 
 ```
 
 
+### sDETE and slncRnA
 #### Intermediate file 3.17) slncRNA_to_sDETE_distance_Both.rds
 #### Intermediate file 3.18) slncRNA_to_sDETE_distance_Pheno.rds
 #### Intermediate file 3.19) random_draft_DETE_to_lncRNA_distance_Both.rds
 #### Intermediate file 3.20) random_draft_DETE_to_lncRNA_distance_Pheno.rds
 
 ```{r}
+# dir_github_script <- "G:/My Drive/github_script/" ## replace with your local directory
+dir_to_Liver_TE_exp <- paste0(dir_github_script, "intermediate_files_prep/Figure3/")
+dir_lncRNA_count <- paste0(dir_github_script, "intermediate_files_prep/Figure3/")
+dir_github_intermediate_files_fig3 <- paste0(dir_github_script, 
+                                             "intermediate_files_prep/Figure3/collection_intermediate_files/")
+
+
+#### All lncRNA to all DETE
+liver_sDETE_annot <- readRDS(file = paste0(dir_to_Liver_TE_exp, "liver_diff_TE_annot_genic.rds")) %>% filter(abs(log2FoldChange) >= 1)
+liver_diff_TE_annot_genic_Both <- liver_sDETE_annot %>% filter(Comparison == "XX.F vs XY.M")
+liver_diff_TE_annot_genic_Pheno <- liver_sDETE_annot %>% filter(Comparison == "XY.F vs XY.M")
+
+#### Heavy for a local computer to calculate. Prepared ahead of time on cluster.
+##### check distance between nearest slncRNA
+# lncRNA_to_sDETE_distance_Both <- check_region_region_distance(liver_diff_TE_annot_genic_Both, 
+#                                              Liver_all_lncRNA_pos, compared_to_itself = TRUE)
+# lncRNA_to_sDETE_distance_Pheno <- check_region_region_distance(liver_diff_TE_annot_genic_Pheno, 
+#                                               Liver_all_lncRNA_pos, compared_to_itself = TRUE)
+lncRNA_to_sDETE_distance_Both <- readRDS(file = paste0(dir_lncRNA_count,
+                                                     "lncRNA_to_sDETE_distance_Both.rds"))
+lncRNA_to_sDETE_distance_Pheno <- readRDS(file = paste0(dir_lncRNA_count,
+                                                        "lncRNA_to_sDETE_distance_Pheno.rds"))
+
+#### Heavy for a local computer to calculate. Prepared ahead of time on cluster.
+# slncRNA_to_sDETE_distance_Both <- check_region_region_distance(liver_diff_TE_annot_genic_Both, 
+#                                              Liver_slncRNA_XXfvsXYm, compared_to_itself = TRUE)
+# slncRNA_to_sDETE_distance_Pheno <- check_region_region_distance(liver_diff_TE_annot_genic_Pheno, 
+#                                               Liver_slncRNA_XYfvsXYm, compared_to_itself = TRUE)
+slncRNA_to_sDETE_distance_Both <- readRDS(file = paste0(dir_lncRNA_count,
+                                                     "slncRNA_to_sDETE_distance_Both.rds"))
+slncRNA_to_sDETE_distance_Pheno <- readRDS(file = paste0(dir_lncRNA_count,
+                                                        "slncRNA_to_sDETE_distance_Pheno.rds"))
+
+
+
+random_draft_DETE_to_lncRNA_distance_Both <- sample(lncRNA_to_sDETE_distance_Both[[2]]$dist_check, 1000)
+random_draft_DETE_to_lncRNA_distance_Pheno <- sample(lncRNA_to_sDETE_distance_Pheno[[2]]$dist_check, 1000)
+
+for(i in 1:10000){
+   random_draft_DETE_to_lncRNA_distance_Both <- (random_draft_DETE_to_lncRNA_distance_Both + 
+                                                  sample(lncRNA_to_sDETE_distance_Both[[2]]$dist_check, 1000))/2
+   random_draft_DETE_to_lncRNA_distance_Pheno <- (random_draft_DETE_to_lncRNA_distance_Pheno + 
+                                                  sample(lncRNA_to_sDETE_distance_Pheno[[2]]$dist_check, 1000))/2
+}
+
+sDETE_to_lncRNA_distance_Both_reformated <- tibble(dist_check =random_draft_DETE_to_gene_distance_Both)  %>% 
+                                              mutate(Group = "sDETE_and_randomlncRNA(XX.FvsXY.M)") %>%
+                                dplyr::select(c( "dist_check", "Group")) %>% 
+                                    arrange(dist_check) %>% filter(dist_check > 0)
+
+sDETE_to_lncRNA_distance_Pheno_reformated <- tibble(dist_check = random_draft_DETE_to_lncRNA_distance_Pheno)  %>% 
+                                              mutate(Group = "sDETE_and_randomlncRNA(XX.FvsXY.M)") %>%
+  dplyr::select(c("dist_check", "Group")) %>% 
+  arrange(dist_check) %>% filter(dist_check > 0)
+
+saveRDS(slncRNA_to_sDETE_distance_Both, file = paste0(dir_github_intermediate_files_fig3, 
+                                                "slncRNA_to_sDETE_distance_Both.rds"))
+saveRDS(slncRNA_to_sDETE_distance_Pheno, file = paste0(dir_github_intermediate_files_fig3,
+                                                 "slncRNA_to_sDETE_distance_Pheno.rds"))
+saveRDS(random_draft_DETE_to_lncRNA_distance_Both, file = paste0(dir_github_intermediate_files_fig3,
+                                                   "random_draft_DETE_to_lncRNA_distance_Both.rds"))
+saveRDS(random_draft_DETE_to_lncRNA_distance_Pheno, file = paste0(dir_github_intermediate_files_fig3,
+                                                        "random_draft_DETE_to_lncRNA_distance_Pheno.rds"))
+
 
 ```
 
