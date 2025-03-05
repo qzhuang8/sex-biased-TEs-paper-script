@@ -11,6 +11,6 @@ We also include scripts (Figure1_intermediate_files et. al.) that create interme
 Some intermediate files required high computing resources to be generated on a laptop/desktop. We directly include such intermediate files generated on cluster instead. 
 Note: the mm10_rmsk_TE_strand_label.zip file in the intermediate_files_prep/Figure3/ folder will need to be unzipped before being used. The original file was larger than 100Mb that it has to be compressed to enable uploading. 
 
-The script is licensed under a Creative Commons Attribution 4.0 International License. 
+The script is licensed under the MIT License (MIT)
 
 
