@@ -11,6 +11,12 @@ We also include scripts (Figure1_intermediate_files et. al.) that create interme
 Some intermediate files required high computing resources to be generated on a laptop/desktop. We directly include such intermediate files generated on cluster instead. 
 Note: the mm10_rmsk_TE_strand_label.zip file in the intermediate_files_prep/Figure3/ folder will need to be unzipped before being used. The original file was larger than 100Mb that it has to be compressed to enable uploading. 
 
-The script is licensed under the MIT License (MIT)
+The script is licensed under the MIT License (MIT).
+
+Copyright (c) 2025 Qinwei Zhuang
+
+Permission is hereby granted, free of charge, to any person obtaining a copy of this software and associated documentation files (the “Software”), to deal in the Software without restriction, including without limitation the rights to use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the Software, and to permit persons to whom the Software is furnished to do so.
+
+THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
 
